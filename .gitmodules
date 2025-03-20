@@ -1,0 +1,3 @@
+[submodule "analog-cim-sim"]
+	path = analog-cim-sim
+	url = https://github.com/rpelke/analog-cim-sim.git
