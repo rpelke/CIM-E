@@ -12,7 +12,6 @@ rm -rf ${DIR}/build
 cd ${DIR}/analog-cim-sim
 mkdir -p ${DIR}/build/release/build && cd ${DIR}/build/release/build
 
-gcc_version=$(gcc -dumpversion | cut -d '.' -f 1)
 python_version=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1-2)
 
 cmake \
