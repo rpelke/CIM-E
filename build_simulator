@@ -1,0 +1,23 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ="Europe/Berlin"
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    cmake \
+    gcc \
+    python3-dev \
+    python3-pip \
+    python3-venv
+
+
+COPY analog-cim-sim /apps/analog-cim-sim
+COPY scripts /apps/scripts
+
+RUN python3 -m venv /apps/.venv
+RUN . /apps/.venv/bin/activate && pip3 install -r /apps/analog-cim-sim/requirements.txt
+RUN . /apps/.venv/bin/activate && /apps/scripts/build_simulator.bash
+
+WORKDIR /apps

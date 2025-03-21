@@ -20,16 +20,17 @@ If you don't have python3-dev, the simulator won't compile.
     pip3 install -r analog-cim-sim/requirements.txt
     ```
 
-1. Build the simulator:
+1. Build the simulator in docker:
 
-    Please use gcc>=10 or an equivalent clang.
-    Inside the .venv, execute:
     ```bash
-    ./build_simulator.bash
+    docker build -f build_simulator -t cim-explorer .
     ```
 
-1. Test the simulator:
+1. Test the simulator in docker:
 
     ```bash
+    docker run -it --rm cim-explorer
+    source .venv/bin/activate
     python3 -m unittest discover -s analog-cim-sim/int-bindings/test -p '*_test.py'
+    deactivate
     ```
