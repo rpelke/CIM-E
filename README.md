@@ -26,11 +26,6 @@ If you don't have python3-dev, the simulator won't compile.
     docker build -f build_simulator -t cim-explorer .
     ```
 
-    docker run -it --rm \
-        -v $(pwd)/python:/apps/python:Z \
-        -v $(pwd)/models:/apps/models:Z \
-        cim-explorer
-
 1. Test the simulator in docker:
 
     ```bash
@@ -38,4 +33,15 @@ If you don't have python3-dev, the simulator won't compile.
     source .venv/bin/activate
     python3 -m unittest discover -s analog-cim-sim/int-bindings/test -p '*_test.py'
     deactivate
+    ```
+
+1. Execute a model:
+
+    ```bash
+    docker run -it --rm \
+        -v $(pwd)/python:/apps/python:Z \
+        -v $(pwd)/models:/apps/models:Z \
+        cim-explorer
+
+    # TODO
     ```
