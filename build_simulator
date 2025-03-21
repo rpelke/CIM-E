@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ="Europe/Berlin"
@@ -12,12 +12,16 @@ RUN apt-get install -y --no-install-recommends \
     python3-pip \
     python3-venv
 
+RUN python3 -m venv /apps/.venv
 
+# Install simulator
 COPY analog-cim-sim /apps/analog-cim-sim
 COPY scripts /apps/scripts
-
-RUN python3 -m venv /apps/.venv
 RUN . /apps/.venv/bin/activate && pip3 install -r /apps/analog-cim-sim/requirements.txt
 RUN . /apps/.venv/bin/activate && /apps/scripts/build_simulator.bash
+
+# Install TVM runtime
+COPY requirements.txt /apps/requirements.txt 
+RUN . /apps/.venv/bin/activate && pip3 install -r /apps/requirements.txt
 
 WORKDIR /apps

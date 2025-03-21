@@ -26,6 +26,11 @@ If you don't have python3-dev, the simulator won't compile.
     docker build -f build_simulator -t cim-explorer .
     ```
 
+    docker run -it --rm \
+        -v $(pwd)/python:/apps/python:Z \
+        -v $(pwd)/models:/apps/models:Z \
+        cim-explorer
+
 1. Test the simulator in docker:
 
     ```bash
