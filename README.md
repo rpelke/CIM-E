@@ -39,9 +39,10 @@ If you don't have python3-dev, the simulator won't compile.
 
     ```bash
     docker run -it --rm \
-        -v $(pwd)/python:/apps/python:Z \
+        -v $(pwd)/src:/apps/src:Z \
         -v $(pwd)/models:/apps/models:Z \
         cim-explorer
 
-    # TODO
+    source .venv/bin/activate
+    python3 src/main.py --config src/configs/adc.json
     ```
