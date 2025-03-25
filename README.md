@@ -41,6 +41,7 @@ If you don't have python3-dev, the simulator won't compile.
     docker run -it --rm \
         -v $(pwd)/src:/apps/src:Z \
         -v $(pwd)/models:/apps/models:Z \
+        -v $(pwd)/results:/apps/results:Z \
         cim-explorer
 
     source .venv/bin/activate

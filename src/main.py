@@ -15,5 +15,7 @@ if __name__ == "__main__":
     with open(args.config, 'r') as json_file:
         cfg = json.load(json_file)
 
+    exp_name = args.config.split('/')[-1].split('.json')[0]
+    
     exp = create_experiment(cfg)
-    run_experiments(exp)
+    run_experiments(exp, exp_name)

@@ -8,5 +8,6 @@ __pycache__
 # Build
 build/*
 
-# Artefacts
+# Simulation artefacts
 acs_configs
+results
