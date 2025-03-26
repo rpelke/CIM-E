@@ -14,17 +14,19 @@ cd ${PROJ_DIR}/analog-cim-sim
 mkdir -p ${PROJ_DIR}/build/release/build && cd ${PROJ_DIR}/build/release/build
 
 python_version=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1-2)
+LIB_INSTALL_PATH=${PROJ_DIR}/.venv/lib/python${python_version}/site-packages/pybind11/share/cmake/pybind11
 
 cmake \
     -DCMAKE_C_COMPILER=gcc \
     -DCMAKE_CXX_COMPILER=g++ \
-    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCMAKE_BUILD_TYPE=Release \
     -DPY_INSTALL_PATH=${PROJ_DIR}/.venv/lib/python${python_version}/site-packages \
-    -DCMAKE_PREFIX_PATH=${PROJ_DIR}/.venv/lib/python${python_version}/site-packages/pybind11/share/cmake/pybind11 \
+    -DCMAKE_PREFIX_PATH=${LIB_INSTALL_PATH} \
     -DCMAKE_INSTALL_PREFIX=../ \
     -DLIB_TESTS=ON \
     -DBUILD_LIB_ACS_INT=ON \
-    ${PROJ_DIR}/analog-cim-sim/cpp 
+    -DBUILD_LIB_CB_EMU=ON \
+    ${PROJ_DIR}/analog-cim-sim/cpp
 
 make -j `nproc`
 make install

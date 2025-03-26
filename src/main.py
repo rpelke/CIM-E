@@ -10,6 +10,10 @@ if __name__ == "__main__":
                         type=str,
                         help='Path to experiment config',
                         required=True)
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='Ude debug mode')
+    
     args = parser.parse_args()
 
     with open(args.config, 'r') as json_file:
@@ -18,4 +22,4 @@ if __name__ == "__main__":
     exp_name = args.config.split('/')[-1].split('.json')[0]
     
     exp = create_experiment(cfg)
-    run_experiments(exp, exp_name)
+    run_experiments(exp, exp_name, args.debug)
