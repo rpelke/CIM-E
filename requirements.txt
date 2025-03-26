@@ -1,5 +1,5 @@
 pandas
 joblib
 tensorflow
-numpy==1.24.3
+numpy==1.26.0
 apache-tvm

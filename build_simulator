@@ -25,3 +25,11 @@ COPY requirements.txt /apps/requirements.txt
 RUN . /apps/.venv/bin/activate && pip3 install -r /apps/requirements.txt
 
 WORKDIR /apps
+
+# Create a home directory for python cache when starting docker as user
+RUN mkdir /apps/home && chmod 777 /apps/home && chmod 777 /apps
+ENV HOME=/apps/home
+
+COPY scripts/entrypoint.bash /apps/entrypoint.bash
+RUN chmod 777 /apps/entrypoint.bash
+ENTRYPOINT ["/apps/entrypoint.bash"]

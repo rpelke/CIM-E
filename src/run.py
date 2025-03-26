@@ -6,6 +6,7 @@ from typing import Tuple
 from typing import Union
 from typing import List
 import tensorflow as tf
+import multiprocessing
 import pandas as pd
 import numpy as np
 import tempfile
@@ -21,6 +22,29 @@ from experiment import ExpConfig
 from model_parser import get_model_name
 
 repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
+python_version = '.'.join(sys.version.split('.', 2)[:2])
+lock = multiprocessing.Lock()
+
+ACS_CFG_DIR = f"{repo_path}/src/acs_configs"
+ACS_LIB_PATH = f"{repo_path}/.venv/lib/python{python_version}/site-packages"
+EMU_LIB_PATH = f"{repo_path}/build/release/lib/libacs_cb_emu.so"
+
+
+def _check_pathes():
+    if not os.path.exists(ACS_CFG_DIR):
+        raise Exception(f"Cannot find ACS_CFG_DIR '{ACS_CFG_DIR}'")
+    if not os.path.exists(ACS_LIB_PATH):
+        raise Exception(f"Cannot find ACS_LIB_PATH '{ACS_LIB_PATH}'")
+    if not os.path.exists(EMU_LIB_PATH):
+        raise Exception(f"Cannot find EMU_LIB_PATH '{EMU_LIB_PATH}'")
+
+    # Delete old configs
+    json_files = glob.glob(os.path.join(ACS_CFG_DIR, "*.json"))
+    for file in json_files:
+        try:
+            os.remove(file)
+        except Exception as e:
+            print(f"Error deleting file {file}: {e}")
 
 
 def iterate_experiments(exp: ExpConfig):
@@ -55,6 +79,9 @@ def iterate_experiments(exp: ExpConfig):
         ][0]
         config_entry['ifm'] = exp.ifm[nn_idx]
         cfg.append(config_entry)
+
+    if len(cfg) == 0:
+        raise Exception("Could not load config.")
     return cfg
 
 
@@ -135,8 +162,11 @@ def _check_prev_results(cfg: dict, result_path: str,
     Returns:
         dict: Reduced configuration with only 'new' simulations
     """
-    if not os.path.exists(result_path) or not os.path.exists(
-            f"{result_path}/{exp_name}.csv"):
+    if not os.path.exists(result_path):
+        # Don't create this here because of docker --user permissions
+        raise Exception(f"Please create folder '{result_path}' first.")
+
+    if not os.path.exists(f"{result_path}/{exp_name}.csv"):
         os.makedirs(result_path, exist_ok=True)
         assert len(cfg) > 0, "Empty configuration file."
         accuracy_results = ["top1", "top5", "top1_baseline", "top5_baseline"]
@@ -183,18 +213,18 @@ def _preload_data_sets(cfg: List[dict]):
 
 def _load_xbar_simulator_lib(c: dict):
     # Execute dlopen to make symbols visible for the compiled executable
-    python_version = '.'.join(sys.version.split('.', 2)[:2])
-    lib_path = f"{repo_path}/.venv/lib/python{python_version}/site-packages"
-    files = glob.glob(os.path.join(lib_path, 'acs_int.cpython*'))
+    files = glob.glob(os.path.join(ACS_LIB_PATH, 'acs_int.cpython*'))
     assert len(files) == 1
     acs_lib = ctypes.CDLL(f"{files[0]}", mode=ctypes.RTLD_GLOBAL)
 
     import acs_int
 
     # Create config file for simulator
-    acs_cfg_dir = f"{repo_path}/src/acs_configs"
-    os.makedirs(acs_cfg_dir, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=acs_cfg_dir,
+    if not os.path.exists(ACS_CFG_DIR):
+        # Don't create this here because of docker --user permissions
+        raise Exception(f"Please create folder '{ACS_CFG_DIR}' first.")
+
+    with tempfile.NamedTemporaryFile(dir=ACS_CFG_DIR,
                                      suffix=".json",
                                      delete=False) as tmp_file:
         tmp_name = tmp_file.name
@@ -206,14 +236,14 @@ def _load_xbar_simulator_lib(c: dict):
 
 
 def _load_emulator_lib():
-    lib_path = f"{repo_path}/build/release/lib/libacs_cb_emu.so"
-    emu_lib = ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
+    emu_lib = ctypes.CDLL(EMU_LIB_PATH, mode=ctypes.RTLD_GLOBAL)
     return emu_lib
 
 
 def _run_single_experiment(c: dict, emulation: bool = False):
-    n_classes, (train_images, train_labels), (test_images,
-                                              test_labels) = _get_dataset(c)
+    with lock:
+        n_classes, (train_images,
+                    train_labels), (test_images, test_labels) = _get_dataset(c)
 
     if emulation:
         emu_lib = _load_emulator_lib()
@@ -314,6 +344,7 @@ def _get_matching_baseline(cfg: dict, baseline_accuracies: List[dict]) -> dict:
 
 
 def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
+    _check_pathes()
     cfgs = iterate_experiments(exp)
     _preload_data_sets(cfgs)
 
@@ -331,9 +362,13 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
         for c in cfgs:
             res.append(_run_single_experiment(c))
     else:
-        res = Parallel(n_jobs=-2, backend='loky',
-                       timeout=None)(delayed(_run_single_experiment)(c)
-                                     for c in cfgs)
+        from pickle import UnpicklingError
+        try:
+            res = Parallel(n_jobs=-2, backend='loky',
+                           timeout=None)(delayed(_run_single_experiment)(c)
+                                         for c in cfgs)
+        except UnpicklingError as e:
+            print(f"UnpicklingError: {e}")
 
     for cfg, top1, top5 in res:
         top1_baseline, top5_baseline = _get_matching_baseline(
