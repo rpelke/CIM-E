@@ -30,13 +30,17 @@ DOCKER_FLAGS=""
 
 if [[ "$(docker --version)" == *"podman"* ]]; then
     echo "Using podman"
-    DOCKER_FLAGS="--userns keep-id"
+    if podman run --help | grep -q -- "--userns=keep-id"; then
+        DOCKER_FLAGS="--userns=keep-id"
+    else
+        DOCKER_FLAGS="--userns=host"
+    fi
 else
     echo "Using docker"
     DOCKER_FLAGS="--user $(id -u):$(id -g)"
 fi
 
-docker run -it --rm $DOCKER_FLAGS --memory=4g \
+docker run -it --rm --memory=4g $DOCKER_FLAGS \
     -v ${PROJ_DIR}/src:/apps/src:Z \
     -v ${PROJ_DIR}/models:/apps/models:Z \
     -v ${PROJ_DIR}/results:/apps/results:Z \

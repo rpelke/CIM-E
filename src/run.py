@@ -12,7 +12,6 @@ from joblib import delayed
 from typing import Tuple
 from typing import List
 import tensorflow as tf
-import multiprocessing
 import pandas as pd
 import numpy as np
 import tempfile
@@ -29,7 +28,6 @@ from model_parser import get_model_name
 
 repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 python_version = '.'.join(sys.version.split('.', 2)[:2])
-lock = multiprocessing.Lock()
 
 ACS_CFG_DIR = f"{repo_path}/src/acs_configs"
 ACS_LIB_PATH = f"{repo_path}/.venv/lib/python{python_version}/site-packages"
@@ -120,8 +118,10 @@ def _get_dataset(
     else:
         raise ValueError("Dataset not supported")
 
-    return num_classes, (train_images, train_labels), (test_images,
-                                                       test_labels)
+    num_data = cfg['num_runs'] * cfg['batch']
+    return num_classes, (train_images[:num_data],
+                         train_labels[:num_data]), (test_images[:num_data],
+                                                    test_labels[:num_data])
 
 
 def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
@@ -207,19 +207,6 @@ def _check_prev_results(cfg: dict, result_path: str,
         return cfg, df
 
 
-def _preload_data_sets(cfg: List[dict]):
-    """Download datasets before starting the experiments.
-    Downloading them in parallel processes can cause errors.
-    Args:
-        cfg (list[dict]): All configurations
-    """
-    datasets = []
-    for c in cfg:
-        if c['nn_data_set'] not in datasets :
-            _get_dataset(c)
-            datasets.append(c['nn_data_set'])
-
-
 def _load_xbar_simulator_lib(c: dict):
     # Execute dlopen to make symbols visible for the compiled executable
     files = glob.glob(os.path.join(ACS_LIB_PATH, 'acs_int.cpython*'))
@@ -249,11 +236,12 @@ def _load_emulator_lib():
     return emu_lib
 
 
-def _run_single_experiment(c: dict, emulation: bool = False):
+def _run_single_experiment(c: dict,
+                           data: Tuple[int, Tuple[np.ndarray, np.ndarray],
+                                       Tuple[np.ndarray, np.ndarray]],
+                           emulation: bool = False):
     print("Start new simulation.")
-    with lock:
-        n_classes, (train_images,
-                    train_labels), (test_images, test_labels) = _get_dataset(c)
+    n_classes, (train_images, train_labels), (test_images, test_labels) = data
 
     if emulation:
         emu_lib = _load_emulator_lib()
@@ -310,7 +298,7 @@ def _run_single_experiment(c: dict, emulation: bool = False):
     return c, top1_perc, top5_perc
 
 
-def _get_baseline_accuracy(cfgs: List[dict]) -> List[dict]:
+def _get_baseline_accuracy(cfgs: List[dict], dbg: bool = False) -> List[dict]:
 
     def _check_field(field: str) -> None:
         f = set([c[field] for c in cfgs])
@@ -329,18 +317,33 @@ def _get_baseline_accuracy(cfgs: List[dict]) -> List[dict]:
     ]
     keep_one_per_bnn_tnn = [i for i in keep_one_per_bnn_tnn if i != None]
 
-    baseline_accuracies = []
+    bl_cfgs = []
     for nn in nns:
         for m in keep_one_per_bnn_tnn:
-            cfg = [c for c in cfgs
-                   if c['nn_name'] == nn and c['m_mode'] == m][0]
-            c, top1_baseline, top5_baseline = _run_single_experiment(
-                cfg, emulation=True)
-            c.update({
-                "top1_baseline": top1_baseline,
-                "top5_baseline": top5_baseline
-            })
-            baseline_accuracies.append(c)
+            bl_cfgs.append([
+                c for c in cfgs if c['nn_name'] == nn and c['m_mode'] == m
+            ][0])
+
+    if dbg:
+        bl_res = []
+        for bl_c in bl_cfgs:
+            bl_res.append(
+                _run_single_experiment(bl_c,
+                                       _get_dataset(bl_c),
+                                       emulation=True))
+    else:
+        inputs = [_get_dataset(c) for c in bl_cfgs]
+        bl_res = Parallel(n_jobs=-2, backend='loky', timeout=None)(
+            delayed(_run_single_experiment)(bl_c, inputs[idx], emulation=True)
+            for idx, bl_c in enumerate(bl_cfgs))
+
+    baseline_accuracies = []
+    for c, top1_baseline, top5_baseline in bl_res:
+        c.update({
+            "top1_baseline": top1_baseline,
+            "top5_baseline": top5_baseline
+        })
+        baseline_accuracies.append(c)
     return baseline_accuracies
 
 
@@ -356,7 +359,6 @@ def _get_matching_baseline(cfg: dict, baseline_accuracies: List[dict]) -> dict:
 def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
     _check_pathes()
     cfgs = iterate_experiments(exp)
-    _preload_data_sets(cfgs)
 
     result_path = f"{repo_path}/results/{exp_name}"
     cfgs, df = _check_prev_results(cfgs, result_path, exp_name)
@@ -364,6 +366,8 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
     print(
         f"---Execute experiments '{exp_name}': {len(cfgs)} simulations pending---"
     )
+    if len(cfgs) == 0 :
+        sys.exit(0)
 
     baseline_accuracies = _get_baseline_accuracy(cfgs)
 
@@ -372,13 +376,8 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
         for c in cfgs:
             res.append(_run_single_experiment(c))
     else:
-        from pickle import UnpicklingError
-        try:
-            res = Parallel(n_jobs=-2, backend='loky',
-                           timeout=None)(delayed(_run_single_experiment)(c)
-                                         for c in cfgs)
-        except UnpicklingError as e:
-            print(f"UnpicklingError: {e}")
+        res = Parallel(n_jobs=-2, backend='loky', timeout=None)(
+            delayed(_run_single_experiment)(c, _get_dataset(c)) for c in cfgs)
 
     for cfg, top1, top5 in res:
         top1_baseline, top5_baseline = _get_matching_baseline(

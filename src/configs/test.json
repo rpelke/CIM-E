@@ -1,0 +1,28 @@
+{
+    "nn_names": [
+        "BinaryNet",
+        "BinaryDenseNet28"
+    ],
+    "ifm" : [
+        [32, 32, 3],
+        [32, 32, 3]
+    ],
+    "nn_data_set": "cifar100",
+    "nn_data": "TEST",
+    "batch": 1,
+    "num_runs": 2,
+    "xbar_size": [
+        [256, 256]
+    ],
+    "digital_only": false,
+    "hrs_lrs": [
+        [5.0, 50.0]
+    ],
+    "adc_type": "FP_ALPHA_ADC",
+    "alpha": [1.0],
+    "resolution": [20],
+    "m_mode": ["BNN_I", "BNN_II"],
+    "hrs_noise": [0.0],
+    "lrs_noise": [0.0],
+    "verbose": false
+}

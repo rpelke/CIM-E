@@ -23,10 +23,12 @@ The following steps were tested with Python 3.10.12.
 1. Build the simulator in docker (recommended):
 
     ```bash
-    docker build -f build_simulator -t cim-explorer .
+    docker build -f build_simulator.dockerfile -t cim-explorer .
     ```
+    This project is designed to run rootless, so you can also use `podman`.
+    Make sure `podman-docker` is installed or create an alias for docker that points to podman.
 
-1. Test the simulator in docker:
+1. Test the simulator `analog-cim-sim` manually in docker:
 
     ```bash
     docker run -it --rm --entrypoint "/bin/bash" cim-explorer
@@ -37,8 +39,9 @@ The following steps were tested with Python 3.10.12.
 
 1. Execute the benchmarks with docker:
 
-    E.g., for the `adc` benchmarks, execute:
+    The name of the test is the input argument.
     ```bash
+    ./scripts/benchmark.bash test
     ./scripts/benchmark.bash adc
     ```
 
