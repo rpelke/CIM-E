@@ -57,7 +57,7 @@ class ExpConfig:
                 raise ValueError("resolution should be greater than 0")
         for mode in self.m_mode:
             if mode not in [
-                    "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_IV",
+                    "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI",
                     "TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"
             ]:
                 raise ValueError(f"m_mode {mode} not valid.")

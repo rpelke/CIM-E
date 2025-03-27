@@ -14,6 +14,12 @@ The following steps were tested with Python 3.10.12.
     git clone --recursive https://github.com/rpelke/CIM-Explorer.git
     ```
 
+1. Pull the pre-compiled NNs:
+
+    ```bash
+    git lfs pull
+    ```
+
 1. Build the simulator in docker (recommended):
 
     ```bash

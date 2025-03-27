@@ -10,7 +10,6 @@ from itertools import product
 from joblib import Parallel
 from joblib import delayed
 from typing import Tuple
-from typing import Union
 from typing import List
 import tensorflow as tf
 import multiprocessing
@@ -214,8 +213,11 @@ def _preload_data_sets(cfg: List[dict]):
     Args:
         cfg (list[dict]): All configurations
     """
+    datasets = []
     for c in cfg:
-        _get_dataset(c)
+        if c['nn_data_set'] not in datasets :
+            _get_dataset(c)
+            datasets.append(c['nn_data_set'])
 
 
 def _load_xbar_simulator_lib(c: dict):
@@ -248,6 +250,7 @@ def _load_emulator_lib():
 
 
 def _run_single_experiment(c: dict, emulation: bool = False):
+    print("Start new simulation.")
     with lock:
         n_classes, (train_images,
                     train_labels), (test_images, test_labels) = _get_dataset(c)
