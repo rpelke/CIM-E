@@ -237,16 +237,29 @@ def _load_emulator_lib():
 
 
 def _run_single_experiment(c: dict,
+                           c_idx: int,
+                           num_c: int,
                            data: Tuple[int, Tuple[np.ndarray, np.ndarray],
                                        Tuple[np.ndarray, np.ndarray]],
-                           emulation: bool = False):
-    print("Start new simulation.")
-    n_classes, (train_images, train_labels), (test_images, test_labels) = data
-
-    if emulation:
+                           ideal_xbar: bool = False) -> Tuple[dict, float, float]:
+    """Run a single experiment. This function is called from multiple processes.
+    Args:
+        c (dict): Experiment config
+        c_idx (int): ID of the experiment
+        num_c (int): Total number of experiments
+        data (Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]): IFM/OFM data
+        ideal_xbar (bool, optional): Switch off any non-idealities (if true). Defaults to False.
+    Returns:
+        Tuple[dict, float, float]: cfg c, top 1% accuracy, top 5% accuracy
+    """
+    if ideal_xbar:
+        print(f"Start Baseline Accuracy Simulation ({c_idx + 1}/{num_c})")
         emu_lib = _load_emulator_lib()
     else:
+        print(f"Start Accuracy Simulation ({c_idx + 1}/{num_c})")
         acs_int, acs_lib = _load_xbar_simulator_lib(c)
+
+    n_classes, (train_images, train_labels), (test_images, test_labels) = data
 
     if c['nn_data'] == 'TRAIN':
         images = train_images
@@ -286,10 +299,11 @@ def _run_single_experiment(c: dict,
     top1_perc = (top1_counter / (c['num_runs'] * c['batch'])) * 100
     top5_perc = (top5_counter / (c['num_runs'] * c['batch'])) * 100
 
-    print(f'Top 1% Accuracy: {top1_perc}')
-    print(f'Top 5% Accuracy: {top5_perc}')
+    print(
+        f"({c_idx + 1}/{num_c}) Accuracy - Top 5%: {top5_perc} - Top 1%: {top1_perc}"
+    )
 
-    if emulation:
+    if ideal_xbar:
         del emu_lib
     else:
         del acs_int
@@ -326,15 +340,18 @@ def _get_baseline_accuracy(cfgs: List[dict], dbg: bool = False) -> List[dict]:
 
     if dbg:
         bl_res = []
-        for bl_c in bl_cfgs:
+        for bl_idx, bl_c in enumerate(bl_cfgs):
             bl_res.append(
                 _run_single_experiment(bl_c,
+                                       bl_idx,
+                                       len(bl_c),
                                        _get_dataset(bl_c),
-                                       emulation=True))
+                                       ideal_xbar=True))
     else:
         inputs = [_get_dataset(c) for c in bl_cfgs]
         bl_res = Parallel(n_jobs=-2, backend='loky', timeout=None)(
-            delayed(_run_single_experiment)(bl_c, inputs[idx], emulation=True)
+            delayed(_run_single_experiment)(
+                bl_c, idx, len(bl_cfgs), inputs[idx], ideal_xbar=True)
             for idx, bl_c in enumerate(bl_cfgs))
 
     baseline_accuracies = []
@@ -364,20 +381,23 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
     cfgs, df = _check_prev_results(cfgs, result_path, exp_name)
 
     print(
-        f"---Execute experiments '{exp_name}': {len(cfgs)} simulations pending---"
+        f"---Execute experiment '{exp_name}': {len(cfgs)} simulations pending---"
     )
-    if len(cfgs) == 0 :
+    if len(cfgs) == 0:
         sys.exit(0)
 
     baseline_accuracies = _get_baseline_accuracy(cfgs)
 
     if dbg:
         res = []
-        for c in cfgs:
-            res.append(_run_single_experiment(c))
+        for c_idx, c in enumerate(cfgs):
+            res.append(
+                _run_single_experiment(c, c_idx, len(cfgs), _get_dataset(c)))
     else:
-        res = Parallel(n_jobs=-2, backend='loky', timeout=None)(
-            delayed(_run_single_experiment)(c, _get_dataset(c)) for c in cfgs)
+        res = Parallel(n_jobs=-2, backend='loky',
+                       timeout=None)(delayed(_run_single_experiment)(
+                           c, c_idx, len(cfgs), _get_dataset(c))
+                                     for c_idx, c in enumerate(cfgs))
 
     for cfg, top1, top5 in res:
         top1_baseline, top5_baseline = _get_matching_baseline(
