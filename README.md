@@ -1,4 +1,6 @@
 # CIM-Explorer
+[![Style](https://github.com/rpelke/CIM-Explorer/actions/workflows/style.yml/badge.svg)](https://github.com/rpelke/CIM-Explorer/actions/workflows/style.yml)
+
 CIM-Explorer optimizes BNN and TNN inference for RRAM crossbars.
 It uses the mappings and the crossbar simulator from [analog-cim-sim](https://github.com/rpelke/analog-cim-sim).
 
@@ -45,7 +47,7 @@ The following steps were tested with Python 3.10.12.
     ./scripts/benchmark.bash adc
     ```
 
-1. Native build of the simulator (not recommended):
+1. Native build of the simulator (for development only):
 
     ```bash
     python3 -m venv .venv

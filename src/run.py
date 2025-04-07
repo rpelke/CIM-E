@@ -236,12 +236,13 @@ def _load_emulator_lib():
     return emu_lib
 
 
-def _run_single_experiment(c: dict,
-                           c_idx: int,
-                           num_c: int,
-                           data: Tuple[int, Tuple[np.ndarray, np.ndarray],
-                                       Tuple[np.ndarray, np.ndarray]],
-                           ideal_xbar: bool = False) -> Tuple[dict, float, float]:
+def _run_single_experiment(
+        c: dict,
+        c_idx: int,
+        num_c: int,
+        data: Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray,
+                                                              np.ndarray]],
+        ideal_xbar: bool = False) -> Tuple[dict, float, float]:
     """Run a single experiment. This function is called from multiple processes.
     Args:
         c (dict): Experiment config

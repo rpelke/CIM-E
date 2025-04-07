@@ -1,0 +1,29 @@
+name: Style
+
+on:
+  push:
+    branches:
+      - main
+      - dev*
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      
+      - name: Create virtual environment
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r util/requirements_style.txt
+          ./util/format_py.py

@@ -52,7 +52,7 @@ class ExpConfig:
         for a in self.alpha:
             if a <= 0.0:
                 raise ValueError("alpha should be greater than 0")
-        for r in self.resolution :
+        for r in self.resolution:
             if r <= 0:
                 raise ValueError("resolution should be greater than 0")
         for mode in self.m_mode:
@@ -67,7 +67,6 @@ class ExpConfig:
         for noise in self.lrs_noise:
             if noise < 0.0:
                 raise ValueError("lrs_noise should be greater than 0")
-
 
     def __post_init__(self):
         for field in self.__dataclass_fields__:

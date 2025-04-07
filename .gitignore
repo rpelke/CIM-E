@@ -1,6 +1,7 @@
 # Python
 .venv
 __pycache__
+.pkl_memoize_py3
 
 # VS Code
 .vscode
