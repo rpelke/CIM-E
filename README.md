@@ -47,6 +47,7 @@ The following steps were tested with Python 3.10.12.
     ./scripts/benchmark.bash adc
     ./scripts/benchmark.bash lrs_var
     ./scripts/benchmark.bash hrs_var
+    ./scripts/benchmark.bash adc_vgg7
     ```
 
 1. Native build of the simulator (for development only):

@@ -115,6 +115,20 @@ def _get_dataset(
         else:
             raise ValueError("Dataset not supported")
 
+    elif cfg['nn_name'] in ['VGG7']:
+        if cfg['nn_data_set'] == 'cifar10':
+            num_classes = 10
+            (train_images, train_labels), (
+                test_images,
+                test_labels) = tf.keras.datasets.cifar10.load_data()
+            train_images = train_images.reshape(
+                (50000, 32, 32, 3)).astype("float32")
+            test_images = test_images.reshape(
+                (10000, 32, 32, 3)).astype("float32")
+            train_images, test_images = train_images / 127.5 - 1, test_images / 127.5 - 1
+        else:
+            raise ValueError("Dataset not supported")
+
     else:
         raise ValueError("Dataset not supported")
 
@@ -152,6 +166,10 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     # Set ADC to infinity
     if acs_data["resolution"] == -1:
         acs_data["adc_type"] = "INF_ADC"
+
+    if cfg['m_mode'] in ['TNN_IV', 'TNN_V']:
+        acs_data["SPLIT"] = [1, 1]
+        acs_data["W_BIT"] = 2
 
     with open(f"{tmp_name}", "w") as f:
         json.dump(acs_data, f, indent=4)

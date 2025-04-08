@@ -29,7 +29,7 @@ class ExpConfig:
     verbose: bool
 
     def __check_paramters(self):
-        if self.nn_data_set not in ["cifar100"]:
+        if self.nn_data_set not in ["cifar10", "cifar100"]:
             raise ValueError("nn_data_set not supported.")
         for ifm_shape in self.ifm:
             for elem in ifm_shape:
@@ -67,17 +67,21 @@ class ExpConfig:
         for noise in self.lrs_noise:
             if noise < 0.0:
                 raise ValueError("lrs_noise should be greater than 0")
-        
-        # Checks for variability benchmarks
-        if (self.resolution	== [-1]) or (self.adc_type == "INF_ADC") :
-            if len(self.alpha) != 1 :
-                print("alpha has no influence in this configuration. It is set to 1.0.")
-                self.alpha = [1.0]
-            if (self.adc_type != "INF_ADC") :
-                raise ValueError("When using resolution=[-1], adc_type should be 'INF_ADC'")
-            if (self.resolution != [-1]) :
-                raise ValueError("When using adc_type='INF_ADC', resolution should be set to [-1]")
 
+        # Checks for variability benchmarks
+        if (self.resolution == [-1]) or (self.adc_type == "INF_ADC"):
+            if len(self.alpha) != 1:
+                print(
+                    "alpha has no influence in this configuration. It is set to 1.0."
+                )
+                self.alpha = [1.0]
+            if (self.adc_type != "INF_ADC"):
+                raise ValueError(
+                    "When using resolution=[-1], adc_type should be 'INF_ADC'")
+            if (self.resolution != [-1]):
+                raise ValueError(
+                    "When using adc_type='INF_ADC', resolution should be set to [-1]"
+                )
 
     def __post_init__(self):
         for field in self.__dataclass_fields__:
