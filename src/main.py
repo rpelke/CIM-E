@@ -17,7 +17,7 @@ if __name__ == "__main__":
                         type=str,
                         help='Path to experiment config',
                         required=True)
-    parser.add_argument('--debug', action='store_true', help='Ude debug mode')
+    parser.add_argument('--debug', action='store_true', help='Use debug mode')
 
     args = parser.parse_args()
 

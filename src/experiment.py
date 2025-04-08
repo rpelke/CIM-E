@@ -47,13 +47,13 @@ class ExpConfig:
         for (hrs, lrs) in self.hrs_lrs:
             if hrs < 0.0 or lrs <= 0.0 or hrs >= lrs:
                 raise ValueError("error in hrs_lrs should be greater than 0")
-        if self.adc_type not in ["FP_ALPHA_ADC"]:
+        if self.adc_type not in ["FP_ALPHA_ADC", "INF_ADC"]:
             raise ValueError("adc_type not valid.")
         for a in self.alpha:
             if a <= 0.0:
                 raise ValueError("alpha should be greater than 0")
         for r in self.resolution:
-            if r <= 0:
+            if r != -1 and r <= 0:
                 raise ValueError("resolution should be greater than 0")
         for mode in self.m_mode:
             if mode not in [
@@ -67,6 +67,17 @@ class ExpConfig:
         for noise in self.lrs_noise:
             if noise < 0.0:
                 raise ValueError("lrs_noise should be greater than 0")
+        
+        # Checks for variability benchmarks
+        if (self.resolution	== [-1]) or (self.adc_type == "INF_ADC") :
+            if len(self.alpha) != 1 :
+                print("alpha has no influence in this configuration. It is set to 1.0.")
+                self.alpha = [1.0]
+            if (self.adc_type != "INF_ADC") :
+                raise ValueError("When using resolution=[-1], adc_type should be 'INF_ADC'")
+            if (self.resolution != [-1]) :
+                raise ValueError("When using adc_type='INF_ADC', resolution should be set to [-1]")
+
 
     def __post_init__(self):
         for field in self.__dataclass_fields__:

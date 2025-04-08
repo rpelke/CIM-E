@@ -387,7 +387,7 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
     if len(cfgs) == 0:
         sys.exit(0)
 
-    baseline_accuracies = _get_baseline_accuracy(cfgs)
+    baseline_accuracies = _get_baseline_accuracy(cfgs, dbg)
 
     if dbg:
         res = []
