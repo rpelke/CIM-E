@@ -44,4 +44,4 @@ docker run -it --rm --memory=4g $DOCKER_FLAGS \
     -v ${PROJ_DIR}/src:/apps/src:Z \
     -v ${PROJ_DIR}/models:/apps/models:Z \
     -v ${PROJ_DIR}/results:/apps/results:Z \
-    cim-explorer $EXP_NAME
+    cim-e $EXP_NAME

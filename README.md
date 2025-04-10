@@ -1,7 +1,7 @@
-# CIM-Explorer
-[![Style](https://github.com/rpelke/CIM-Explorer/actions/workflows/style.yml/badge.svg)](https://github.com/rpelke/CIM-Explorer/actions/workflows/style.yml)
+# <u>CIM</u>-<u>E</u>xplorer
+[![Style](https://github.com/rpelke/CIM-E/actions/workflows/style.yml/badge.svg)](https://github.com/rpelke/CIM-E/actions/workflows/style.yml)
 
-CIM-Explorer optimizes BNN and TNN inference for RRAM crossbars.
+CIM-E optimizes BNN and TNN inference for RRAM crossbars.
 It uses the mappings and the crossbar simulator from [analog-cim-sim](https://github.com/rpelke/analog-cim-sim).
 
 ## Build Instructions
@@ -13,19 +13,19 @@ The following steps were tested with Python 3.10.12.
 1. Clone the repository including submodules:
 
     ```bash
-    git clone --recursive https://github.com/rpelke/CIM-Explorer.git
+    git clone --recursive https://github.com/rpelke/CIM-E.git
     ```
 
-1. Pull the pre-compiled NNs:
+1. Download the pre-compiled BNNs/TNNs:
 
     ```bash
-    git lfs pull
+    ./models/download_models.bash
     ```
 
 1. Build the simulator in docker (recommended):
 
     ```bash
-    docker build -f build_simulator.dockerfile -t cim-explorer .
+    docker build -f build_simulator.dockerfile -t cim-e .
     ```
     This project is designed to run rootless, so you can also use `podman`.
     Make sure `podman-docker` is installed or create an alias for docker that points to podman.
@@ -33,7 +33,7 @@ The following steps were tested with Python 3.10.12.
 1. Test the simulator `analog-cim-sim` manually in docker:
 
     ```bash
-    docker run -it --rm --entrypoint "/bin/bash" cim-explorer
+    docker run -it --rm --entrypoint "/bin/bash" cim-e
     source .venv/bin/activate
     python3 -m unittest discover -s analog-cim-sim/int-bindings/test -p '*_test.py'
     deactivate

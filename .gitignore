@@ -12,3 +12,6 @@ build/*
 # Simulation artefacts
 acs_configs
 results
+
+# Models
+*.so

@@ -38,8 +38,8 @@ cmake \
 
 make -j `nproc`
 make install
-cd $PROJ_DIR/analog-cim-sim
+cd ${PROJ_DIR}/analog-cim-sim
 
 # Execute tests
 python3 -m unittest discover -s int-bindings/test -p '*_test.py'
-cd $PROJ_DIR
+cd ${PROJ_DIR}
