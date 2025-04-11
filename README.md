@@ -30,14 +30,7 @@ The following steps were tested with Python 3.10.12.
     This project is designed to run rootless, so you can also use `podman`.
     Make sure `podman-docker` is installed or create an alias for docker that points to podman.
 
-1. Test the simulator `analog-cim-sim` manually in docker:
-
-    ```bash
-    docker run -it --rm --entrypoint "/bin/bash" cim-e
-    source .venv/bin/activate
-    python3 -m unittest discover -s analog-cim-sim/int-bindings/test -p '*_test.py'
-    deactivate
-    ```
+## Run Simulations
 
 1. Execute the benchmarks with docker:
 
@@ -50,11 +43,51 @@ The following steps were tested with Python 3.10.12.
     ./scripts/benchmark.bash adc_vgg7
     ```
 
-1. Native build of the simulator (for development only):
+## Development Only
+1. Native build of the simulator (without docker):
 
     ```bash
     python3 -m venv .venv
     source .venv/bin/activate
     pip3 install -r analog-cim-sim/requirements.txt
+    pip3 install -r requirements.txt
     ./scripts/build_simulator.bash
     ```
+
+1. Run simulations:
+
+    Select the desired configuration file in the [configs](src/configs) folder.
+    ```bash
+    python3 src/main.py --config src/configs/test.json
+    ```
+    Make sure that you create a folder for the results manually beforehand.
+
+## Troubleshooting
+- Test the simulator `analog-cim-sim` manually in docker:
+
+    ```bash
+    docker run -it --rm --entrypoint "/bin/bash" cim-e
+    source .venv/bin/activate
+    python3 -m unittest discover -s analog-cim-sim/int-bindings/test -p '*_test.py'
+    deactivate && exit
+    ```
+
+- Debug Python code in VSCode:
+
+    Install a Python debugger extension in VSCode and add the following configuration in your `launch.json`:
+    ```json
+    {
+        "name": "Run simulation (Python)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/src/main.py",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "args": [
+            "--debug",
+            "--config",
+            "${workspaceFolder}/src/configs/test.json"
+        ]
+    }
+    ```
+    The `--debug` flag ensures that all simulations are executed in one process and not in several parallel processes.
