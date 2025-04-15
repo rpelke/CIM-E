@@ -238,14 +238,12 @@ def _load_xbar_simulator_lib(c: dict):
         # Don't create this here because of docker --user permissions
         raise Exception(f"Please create folder '{ACS_CFG_DIR}' first.")
 
-    with tempfile.NamedTemporaryFile(dir=ACS_CFG_DIR,
-                                     suffix=".json",
-                                     delete=False) as tmp_file:
-        tmp_name = tmp_file.name
-        acs_config_data = _gen_acs_cfg_data(c, tmp_name)
+    # Set acs config
+    fd, tmp_name = tempfile.mkstemp(dir=ACS_CFG_DIR, suffix=".json")
+    _ = _gen_acs_cfg_data(c, tmp_name)
+    acs_int.set_config(os.path.abspath(tmp_name))
+    os.close(fd)
 
-        # Set acs config
-        acs_int.set_config(os.path.abspath(tmp_name))
     return acs_int, acs_lib
 
 
@@ -332,6 +330,17 @@ def _run_single_experiment(
 
 
 def _get_baseline_accuracy(cfgs: List[dict], dbg: bool = False) -> List[dict]:
+    """Calculate the baseline accuracy for all NN types (e.g., BNN/TNN).
+    This is done by running the experiment with the `ideal xbar`.
+    Ideal xbar means that we are using the crossbar emulator backend
+    that emulates the MVMs in integer arithmetic (no errors).
+    Args:
+        cfgs (List[dict]): Experiment configs
+        dbg (bool, optional): Debug mode. Defaults to False.
+
+    Returns:
+        List[dict]: Experiment configs including baseline accuracies.
+    """
 
     def _check_field(field: str) -> None:
         f = set([c[field] for c in cfgs])
@@ -358,20 +367,18 @@ def _get_baseline_accuracy(cfgs: List[dict], dbg: bool = False) -> List[dict]:
             ][0])
 
     if dbg:
-        bl_res = []
-        for bl_idx, bl_c in enumerate(bl_cfgs):
-            bl_res.append(
-                _run_single_experiment(bl_c,
-                                       bl_idx,
-                                       len(bl_c),
-                                       _get_dataset(bl_c),
-                                       ideal_xbar=True))
+        n_jobs = 1
     else:
-        inputs = [_get_dataset(c) for c in bl_cfgs]
-        bl_res = Parallel(n_jobs=-2, backend='loky', timeout=None)(
-            delayed(_run_single_experiment)(
-                bl_c, idx, len(bl_cfgs), inputs[idx], ideal_xbar=True)
-            for idx, bl_c in enumerate(bl_cfgs))
+        n_jobs = -2
+
+    # Use the `multiprocessing`` backend to terminate all processes
+    # dlopen is called multiple times with two different libs (that have the same functions)
+    # -> Thus, all processes must terminate before the second lib is used
+    inputs = [_get_dataset(c) for c in bl_cfgs]
+    bl_res = Parallel(n_jobs=n_jobs, backend='multiprocessing', timeout=None)(
+        delayed(_run_single_experiment)(
+            bl_c, idx, len(bl_cfgs), inputs[idx], ideal_xbar=True)
+        for idx, bl_c in enumerate(bl_cfgs))
 
     baseline_accuracies = []
     for c, top1_baseline, top5_baseline in bl_res:

@@ -84,7 +84,7 @@ The following steps were tested with Python 3.10.12.
         "console": "integratedTerminal",
         "justMyCode": false,
         "args": [
-            "--debug",
+            "--debug", // Optional: Single-core execution
             "--config",
             "${workspaceFolder}/src/configs/test.json"
         ]
