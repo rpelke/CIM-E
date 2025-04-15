@@ -25,9 +25,9 @@ files=(
     "bnn_cifar100_BinaryNet_b200_mxn256x256_inp200x32x32x3.so"
     "bnn_cifar100_BinaryDenseNet28_b1_mxn256x256_inp1x32x32x3.so"
     "bnn_cifar100_BinaryDenseNet28_b200_mxn256x256_inp200x32x32x3.so"
-    "tnn_cifar10_VGG7_b1_mxn256x256_inp200x32x32x3.so"
+    "tnn_cifar10_VGG7_b1_mxn256x256_inp1x32x32x3.so"
     "tnn_cifar10_VGG7_b200_mxn256x256_inp200x32x32x3.so"
-    "bnn_cifar10_VGG7_b1_mxn256x256_inp200x32x32x3.so"
+    "bnn_cifar10_VGG7_b1_mxn256x256_inp1x32x32x3.so"
     "bnn_cifar10_VGG7_b200_mxn256x256_inp200x32x32x3.so"
 )
 
@@ -35,8 +35,12 @@ base_url="https://rwth-aachen.sciebo.de/s/4ZwRYj23blieuzv/download?path=%2F&file
 
 for file in "${files[@]}"; do
     if [ ! -f "${destination}/${file}" ]; then
-        echo "Downloading $file..."
-        curl -o "${destination}/${file}" "${base_url}${file}"
+        if curl --head --silent --fail "${base_url}${file}" > /dev/null; then
+            echo "Downloading $file..."
+            curl -o "${destination}/${file}" "${base_url}${file}"
+        else
+            echo "Remote file $file does not exist at ${base_url}${file}. Skipping."
+        fi
     else
         echo "$file already exists. Skipping download."
     fi
