@@ -3,3 +3,4 @@ joblib
 tensorflow
 numpy==1.26.0
 apache-tvm
+matplotlib

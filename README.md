@@ -43,6 +43,18 @@ The following steps were tested with Python 3.10.12.
     ./scripts/benchmark.bash adc_vgg7
     ```
 
+1. Plot the results:
+
+    ```bash
+    python3 src/plot.py --config <path_to_config>
+    ```
+
+    For example:
+    ```bash
+    python3 src/plot.py --config src/configs/lrs_var.json
+    ```
+
+
 ## Development Only
 1. Native build of the simulator (without docker):
 
