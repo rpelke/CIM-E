@@ -177,8 +177,69 @@ def variability_hrs_plot(df: pd.DataFrame,
                          s_cat: list,
                          d_cat: list,
                          plt_legend_nr: int = -1) -> None:
-    #TODO
-    pass
+    for nn_name in list(df['nn_name'].unique()):
+        print(f"Generate plots for {nn_name}.")
+        df_nn = df[(df['nn_name'] == nn_name)]
+
+        if 'num_runs' in d_cat:
+            max_num_runs = max(df_nn['num_runs'].unique())
+            df_nn = df_nn[(df_nn['num_runs'] == max_num_runs)]
+
+        if 'hrs_noise' in d_cat:
+            print("Found experiment for hrs_noise (x-Axis).")
+            df_nn = df_nn[(df_nn['lrs_noise'] == 0.0)]
+            hrs_lrs = df_nn['hrs_lrs'].unique()
+
+            for hrs_lrs_str in hrs_lrs:
+                hrs, lrs = ast.literal_eval(hrs_lrs_str)
+                df_hrs_lrs = df_nn[(df_nn['hrs_lrs'] == hrs_lrs_str)]
+
+                plt.figure(figsize=(3.7, 3))
+                plt.rcParams['font.family'] = 'serif'
+                plt.xlabel('HRS ' + r'$\sigma$' + ' ' + r'$(\mu A)$',
+                           fontsize=14)
+                plt.ylabel('Top-1 Accuracy (%)', fontsize=14)
+
+                base_top1 = df_nn['top1_baseline'].unique()
+                assert len(base_top1) == 1
+                plt.axhline(y=base_top1[0], color='black', linestyle='--')
+
+                c_modes = list(df_hrs_lrs['m_mode'].unique())
+                for c_m in c_modes:
+                    df_hrs_lrs_cm = df_hrs_lrs[(
+                        df_hrs_lrs['m_mode'] == c_m)].sort_values(
+                            by='hrs_noise')
+
+                    print(
+                        f"---------------------------------------------------------"
+                    )
+                    print(f"Best results for {nn_name} and {c_m}:")
+                    best_of = df_hrs_lrs_cm[
+                        (df_hrs_lrs_cm['m_mode'] == c_m)
+                        & (df_hrs_lrs_cm['top1'] >=
+                           max(df_hrs_lrs_cm['top1_baseline'].unique()) -
+                           1)].sort_values(by='hrs_noise', ascending=True)
+                    print(best_of[[
+                        'xbar_size', 'm_mode', 'hrs_noise', 'lrs_noise', 'top1'
+                    ]])
+
+                    plt.plot(df_hrs_lrs_cm['hrs_noise'],
+                             df_hrs_lrs_cm['top1'],
+                             marker='x',
+                             label=f"{c_m.replace('_', ' ')}",
+                             color=color_mode[c_m])
+
+                plt.legend(loc='lower left', fontsize=12, ncol=2)
+
+                if nn_name.startswith('cifar100'):
+                    plt.ylim(1, min(100, base_top1 + 1))
+                elif nn_name.startswith('cifar10'):
+                    plt.ylim(10, min(100, base_top1 + 1))
+                plt.xticks(fontsize=14)
+                plt.yticks(fontsize=14)
+                plt.tight_layout()
+                plt.savefig(f"{store_path}/hrs{hrs}_lrs{lrs}_hrs_noise.png")
+                plt.savefig(f"{store_path}/hrs{hrs}_lrs{lrs}_hrs_noise.pdf")
 
 
 if __name__ == "__main__":
