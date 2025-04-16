@@ -17,11 +17,32 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 PROJ_DIR=${DIR}/..
 
-if [ "$#" -ne 1 ]; then
-    echo "Error: Experiment name is required."
+# Default parameters
+N_JOBS=4
+EXP_NAME=""
+
+for ARG in "$@"; do
+    case $ARG in
+        exp_name=*)
+            EXP_NAME="${ARG#*=}"
+            shift
+            ;;
+        n_jobs=*)
+            N_JOBS="${ARG#*=}"
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $ARG"
+            exit 1
+            ;;
+    esac
+done
+
+# Check parameters
+if [ -z "$EXP_NAME" ]; then
+    echo "Error: exp_name is required. Usage: exp_name=<name>"
     exit 1
 else 
-    EXP_NAME="$1"
     mkdir -p $PROJ_DIR/results/$EXP_NAME
     mkdir -p $PROJ_DIR/src/acs_configs
 fi
@@ -44,4 +65,4 @@ docker run -it --rm --memory=4g $DOCKER_FLAGS \
     -v ${PROJ_DIR}/src:/apps/src:Z \
     -v ${PROJ_DIR}/models:/apps/models:Z \
     -v ${PROJ_DIR}/results:/apps/results:Z \
-    cim-e $EXP_NAME
+    cim-e $EXP_NAME $N_JOBS

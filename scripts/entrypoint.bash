@@ -7,13 +7,13 @@
 # found in the root directory of this source tree.                           #
 ##############################################################################
 
-# Get directory of script
-if [ "$#" -ne 1 ]; then
-    echo "Error: Experiment name is required."
+if [ "$#" -ne 2 ]; then
+    echo "Error: Experiment name and number of parallel jobs are required."
     exit 1
 fi
 
 EXP_NAME="$1"
+N_JOBS="$2"
 
 source .venv/bin/activate
-python3 src/main.py --config src/configs/$EXP_NAME.json
+python3 src/main.py --config src/configs/$EXP_NAME.json --n_jobs $N_JOBS

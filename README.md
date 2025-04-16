@@ -36,11 +36,11 @@ The following steps were tested with Python 3.10.12.
 
     The name of the test is the input argument.
     ```bash
-    ./scripts/benchmark.bash test
-    ./scripts/benchmark.bash adc
-    ./scripts/benchmark.bash lrs_var
-    ./scripts/benchmark.bash hrs_var
-    ./scripts/benchmark.bash adc_vgg7
+    ./scripts/benchmark.bash exp_name=test n_jobs=4
+    ./scripts/benchmark.bash exp_name=adc n_jobs=4
+    ./scripts/benchmark.bash exp_name=lrs_var n_jobs=4
+    ./scripts/benchmark.bash exp_name=hrs_var n_jobs=4
+    ./scripts/benchmark.bash exp_name=adc_vgg7 n_jobs=4
     ```
 
 1. Plot the results:
@@ -70,7 +70,7 @@ The following steps were tested with Python 3.10.12.
 
     Select the desired configuration file in the [configs](src/configs) folder.
     ```bash
-    python3 src/main.py --config src/configs/test.json
+    python3 src/main.py --config src/configs/test.json --n_jobs 4
     ```
     Make sure that you create a folder for the results manually beforehand.
 
@@ -98,7 +98,8 @@ The following steps were tested with Python 3.10.12.
         "args": [
             "--debug", // Optional: Single-core execution
             "--config",
-            "${workspaceFolder}/src/configs/test.json"
+            "${workspaceFolder}/src/configs/test.json",
+            "--n_jobs", "4"
         ]
     }
     ```

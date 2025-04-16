@@ -329,7 +329,9 @@ def _run_single_experiment(
     return c, top1_perc, top5_perc
 
 
-def _get_baseline_accuracy(cfgs: List[dict], dbg: bool = False) -> List[dict]:
+def _get_baseline_accuracy(cfgs: List[dict],
+                           n_jobs: int,
+                           dbg: bool = False) -> List[dict]:
     """Calculate the baseline accuracy for all NN types (e.g., BNN/TNN).
     This is done by running the experiment with the `ideal xbar`.
     Ideal xbar means that we are using the crossbar emulator backend
@@ -369,7 +371,7 @@ def _get_baseline_accuracy(cfgs: List[dict], dbg: bool = False) -> List[dict]:
     if dbg:
         n_jobs = 1
     else:
-        n_jobs = -2
+        n_jobs = n_jobs
 
     # Use the `multiprocessing`` backend to terminate all processes
     # dlopen is called multiple times with two different libs (that have the same functions)
@@ -399,7 +401,10 @@ def _get_matching_baseline(cfg: dict, baseline_accuracies: List[dict]) -> dict:
     return matching_dict['top1_baseline'], matching_dict['top5_baseline']
 
 
-def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
+def run_experiments(exp: ExpConfig,
+                    exp_name: str,
+                    n_jobs: int,
+                    dbg: bool = False):
     _check_pathes()
     cfgs = iterate_experiments(exp)
 
@@ -412,7 +417,7 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
     if len(cfgs) == 0:
         sys.exit(0)
 
-    baseline_accuracies = _get_baseline_accuracy(cfgs, dbg)
+    baseline_accuracies = _get_baseline_accuracy(cfgs, n_jobs, dbg)
 
     if dbg:
         res = []
@@ -420,7 +425,7 @@ def run_experiments(exp: ExpConfig, exp_name: str, dbg: bool = False):
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs), _get_dataset(c)))
     else:
-        res = Parallel(n_jobs=-2, backend='loky',
+        res = Parallel(n_jobs=n_jobs, backend='loky',
                        timeout=None)(delayed(_run_single_experiment)(
                            c, c_idx, len(cfgs), _get_dataset(c))
                                      for c_idx, c in enumerate(cfgs))

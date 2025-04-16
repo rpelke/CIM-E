@@ -17,9 +17,20 @@ if __name__ == "__main__":
                         type=str,
                         help='Path to experiment config',
                         required=True)
+    parser.add_argument(
+        '--n_jobs',
+        type=str,
+        help=
+        'The maximum number of concurrently running jobs (joblib parameter)',
+        required=False,
+        default=4)
     parser.add_argument('--debug', action='store_true', help='Use debug mode')
 
     args = parser.parse_args()
+
+    print(f"Run experiment with config: {args.config}")
+    print(f"Number of parallel jobs: {args.n_jobs}")
+    print(f"Debug mode: {args.debug}")
 
     with open(args.config, 'r') as json_file:
         cfg = json.load(json_file)
@@ -27,4 +38,4 @@ if __name__ == "__main__":
     exp_name = args.config.split('/')[-1].split('.json')[0]
 
     exp = create_experiment(cfg)
-    run_experiments(exp, exp_name, args.debug)
+    run_experiments(exp, exp_name, args.n_jobs, args.debug)
