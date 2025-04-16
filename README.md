@@ -55,6 +55,51 @@ The following steps were tested with Python 3.10.12.
     ```
 
 
+## Create new experiment
+
+1. Create a new file `<exp_name>.json` in the [configs](src/configs) folder.
+
+2. Specify all parameters to be used in the design space exploration. Every combination of parameters will be simulated. A tick in the `DSE list`column means that a list with several possible parameters can be created here. Otherwise, only a `Single Choice` is possible.
+
+    | Parameter      | Explanation                            | DSE<br>List | Single<br>Choice |
+    |----------------|----------------------------------------|:------:|:-----:|
+    | `nn_names`     | Names of the neural network architectures       |✅ |    |
+    | `ifm`          | Dimension of the input feature map              | ✅ |    | 
+    | `nn_data_set`  | Data set                                        |    | ✅ |
+    | `nn_data`      | Choise of dataset parts (test or train)         |    | ✅ |
+    | `batch`        | Batch size of input feature map                 |    | ✅ |
+    | `num_runs`     | Total number of images: `batch`*`num_runs`      |    | ✅ |
+    | `xbar_size`    | Dimensions of the offloaded matrix (MxN)        | ✅ |    |
+    | `digital_only` | True if mappings should use digital values only |    | ✅ |
+    | `hrs_lrs`      | HRS/LRS current (in uA) if `V_read is applied`  | ✅ |    | 
+    | `adc_type`     | Currently only supports `FP_ADC_ALPHA`          |    | ✅ |
+    | `alpha`        | Limitation of the ADC range in [0,1], 1 is 100% | ✅ |    | 
+    | `resolution`   | ADC resolution in bit                           | ✅ |    |
+    | `m_mode`       | Mapping mode (see next table)                   | ✅ |    | 
+    | `hrs_noise`    | Std. dev. of the gaussian noise (uA) around hrs | ✅ |    | 
+    | `lrs_noise`    | Std. dev. of the gaussian noise (uA) around lrs | ✅ |    | 
+    | `verbose`      | Enable verbose output of the simulator          | ✅ |    | 
+    
+    A brief overview of the mapping modes is given in the tables below:
+
+    | BNN Mapping     | Weights                      | Inputs                           |
+    |-----------------|------------------------------|----------------------------------|
+    | BNN (I)         | $w_{NN} = g_D^+ - g_D^-$     | $i_{NN} = 2 \cdot v_D - 1$       |
+    | BNN (II)        | $w_{NN} = g_D^+ - g_D^-$     | $i_{NN} = -2 \cdot v_D + 1$      |
+    | BNN (III)       | $w_{NN} = 2 \cdot g_D - 1$   | $i_{NN} = v_D^+ - v_D^-$         |
+    | BNN (IV)        | $w_{NN} = -2 \cdot g_D + 1$  | $i_{NN} = v_D^+ - v_D^-$         |
+    | BNN (V)         | XOR mapping ($v_D^+g_D^+ + v_D^-g_D^-$)                         |
+    | BNN (VI)        | $w_{NN} = g_D^+ - g_D^-$     | $i_{NN} = v_D^+ - v_D^-$         |
+
+    | TNN Mapping | Weights                          | Inputs                           |
+    |-------------|----------------------------------|----------------------------------|
+    | TNN (I)     | $w_{NN} = g_D^+ - g_D^-$         | $i_{NN} = v_D^+ - v_D^-$         |
+    | TNN (II)    | $w_{NN} = g_D^+ - g_D^-$         | $i_{NN} = (v_D^1, v_D^0)$        |
+    | TNN (III)   | $w_{NN} = g_D^+ - g_D^-$         | $i_{NN} + 1 = (v_D^1, v_D^0)$    |
+    | TNN (IV)    | $w_{NN} = (g_D^1, g_D^0)$        | $i_{NN} = v_D^+ - v_D^-$         |
+    | TNN (V)     | $w_{NN} + 1 = (g_D^1, g_D^0)$    | $i_{NN} = v_D^+ - v_D^-$         |
+
+
 ## Development Only
 1. Native build of the simulator (without docker):
 
