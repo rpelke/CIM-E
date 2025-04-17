@@ -1,5 +1,6 @@
 # <u>CIM</u>-<u>E</u>xplorer
-[![Style](https://github.com/rpelke/CIM-E/actions/workflows/style.yml/badge.svg)](https://github.com/rpelke/CIM-E/actions/workflows/style.yml)
+[![Style](https://github.com/MrIdrizi/CIM-E/actions/workflows/style.yml/badge.svg)](https://github.com/MrIdrizi/CIM-E/actions/workflows/style.yml)
+[![Build Check](https://github.com/MrIdrizi/CIM-E/actions/workflows/build.yml/badge.svg)](https://github.com/MrIdrizi/CIM-E/actions/workflows/build.yml)
 
 CIM-E optimizes BNN and TNN inference for RRAM crossbars.
 It uses the mappings and the crossbar simulator from [analog-cim-sim](https://github.com/rpelke/analog-cim-sim).
