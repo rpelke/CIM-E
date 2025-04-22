@@ -7,11 +7,10 @@
 ##############################################################################
 from tvm.contrib import graph_executor
 from itertools import product
-from joblib import Parallel
-from joblib import delayed
 from typing import Tuple
 from typing import List
 import tensorflow as tf
+import multiprocessing
 import pandas as pd
 import numpy as np
 import tempfile
@@ -329,6 +328,10 @@ def _run_single_experiment(
     return c, top1_perc, top5_perc
 
 
+def _run_single_experiment_wrapper(args):
+        return _run_single_experiment(*args)
+
+
 def _get_baseline_accuracy(cfgs: List[dict],
                            n_jobs: int,
                            dbg: bool = False) -> List[dict]:
@@ -373,14 +376,13 @@ def _get_baseline_accuracy(cfgs: List[dict],
     else:
         n_jobs = n_jobs
 
-    # Use the `multiprocessing`` backend to terminate all processes
-    # dlopen is called multiple times with two different libs (that have the same functions)
-    # -> Thus, all processes must terminate before the second lib is used
     inputs = [_get_dataset(c) for c in bl_cfgs]
-    bl_res = Parallel(n_jobs=n_jobs, backend='multiprocessing', timeout=None)(
-        delayed(_run_single_experiment)(
-            bl_c, idx, len(bl_cfgs), inputs[idx], ideal_xbar=True)
-        for idx, bl_c in enumerate(bl_cfgs))
+    args_list = [
+        (bl_c, idx, len(bl_cfgs), inputs[idx], True)
+        for idx, bl_c in enumerate(bl_cfgs)
+    ]
+    with multiprocessing.Pool(processes=n_jobs) as pool:
+        bl_res = pool.map(_run_single_experiment_wrapper, args_list)
 
     baseline_accuracies = []
     for c, top1_baseline, top5_baseline in bl_res:
@@ -425,10 +427,13 @@ def run_experiments(exp: ExpConfig,
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs), _get_dataset(c)))
     else:
-        res = Parallel(n_jobs=n_jobs, backend='loky',
-                       timeout=None)(delayed(_run_single_experiment)(
-                           c, c_idx, len(cfgs), _get_dataset(c))
-                                     for c_idx, c in enumerate(cfgs))
+        args_list = [
+            (c, c_idx, len(cfgs), _get_dataset(c))
+            for c_idx, c in enumerate(cfgs)
+        ]
+
+        with multiprocessing.Pool(processes=n_jobs) as pool:
+            res = pool.map(_run_single_experiment_wrapper, args_list)
 
     for cfg, top1, top5 in res:
         top1_baseline, top5_baseline = _get_matching_baseline(
