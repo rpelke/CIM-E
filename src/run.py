@@ -88,42 +88,87 @@ def iterate_experiments(exp: ExpConfig):
     return cfg
 
 
+def _get_all_datasets(
+    cfgs: List[dict]
+) -> dict[str, str, str, int, int, Tuple[int, Tuple[np.ndarray, np.ndarray],
+                                         Tuple[np.ndarray, np.ndarray]]]:
+    """Preload and preprocess all datasets needed for the experiments.
+    Args:
+        cfgs (List[dict]): All experiment configurations.
+    Returns:
+        dict[str, str, str, int, int,Tuple[int, Tuple[np.ndarray, np.ndarray],
+        Tuple[np.ndarray, np.ndarray]]]: Unique keys and preprocessed datasets.
+    """
+    data_set_info = list(
+        set((c['nn_data_set'], c['nn_data'], c['nn_name'], c['batch'],
+             c['num_runs']) for c in cfgs))
+    datasets = []
+    for (ds, dst, nn, b, nr) in data_set_info:
+        datasets.append({
+            'nn_data_set': ds,
+            'nn_data': dst,
+            'nn_name': nn,
+            'batch': b,
+            'num_runs': nr,
+            'data': _get_dataset(nn, ds, b * nr)
+        })
+    return datasets
+
+
 def _get_dataset(
-    cfg: dict
+    nn_name: str, nn_data_set: str, num_data: int
 ) -> Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
-    if cfg['nn_name'] in ['BinaryDenseNet28', 'BinaryDenseNet37']:
-        if cfg['nn_data_set'] == 'cifar100':
+    """Download and preprocess a dataset.
+    Args:
+        nn_name (str): Name of the NN
+        nn_data_set (str): Data set name
+        num_data (int): Number of samples to load
+    Returns:
+        Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
+            Loaded and preprocessed dataset
+    """
+    if nn_name in ['BinaryDenseNet28', 'BinaryDenseNet37']:
+        if nn_data_set == 'cifar100':
             num_classes = 100
             (train_images, train_labels), (
                 test_images,
                 test_labels) = tf.keras.datasets.cifar100.load_data()
+            train_images, train_labels, test_images, test_labels = \
+                train_images[:num_data], train_labels[:num_data], \
+                test_images[:num_data], test_labels[:num_data]
         else:
             raise ValueError("Dataset not supported")
 
-    elif cfg['nn_name'] in ['BinaryNet']:
-        if cfg['nn_data_set'] == 'cifar100':
+    elif nn_name in ['BinaryNet']:
+        if nn_data_set == 'cifar100':
             num_classes = 100
             (train_images, train_labels), (
                 test_images,
                 test_labels) = tf.keras.datasets.cifar100.load_data()
+            train_images, train_labels, test_images, test_labels = \
+                train_images[:num_data], train_labels[:num_data], \
+                test_images[:num_data], test_labels[:num_data]
             train_images = train_images.reshape(
-                (50000, 32, 32, 3)).astype("float32")
+                (num_data, 32, 32, 3)).astype("float32")
             test_images = test_images.reshape(
-                (10000, 32, 32, 3)).astype("float32")
+                (num_data, 32, 32, 3)).astype("float32")
             train_images, test_images = train_images / 127.5 - 1, test_images / 127.5 - 1
         else:
             raise ValueError("Dataset not supported")
 
-    elif cfg['nn_name'] in ['VGG7']:
-        if cfg['nn_data_set'] == 'cifar10':
+    elif nn_name in ['VGG7']:
+        if nn_data_set == 'cifar10':
             num_classes = 10
             (train_images, train_labels), (
                 test_images,
                 test_labels) = tf.keras.datasets.cifar10.load_data()
+            train_images, train_labels, test_images, test_labels = \
+                train_images[:num_data], train_labels[:num_data], \
+                test_images[:num_data], test_labels[:num_data]
             train_images = train_images.reshape(
-                (50000, 32, 32, 3)).astype("float32")
+                (num_data, 32, 32, 3)).astype("float32")
             test_images = test_images.reshape(
-                (10000, 32, 32, 3)).astype("float32")
+                (num_data, 32, 32, 3)).astype("float32")
             train_images, test_images = train_images / 127.5 - 1, test_images / 127.5 - 1
         else:
             raise ValueError("Dataset not supported")
@@ -131,10 +176,8 @@ def _get_dataset(
     else:
         raise ValueError("Dataset not supported")
 
-    num_data = cfg['num_runs'] * cfg['batch']
-    return num_classes, (train_images[:num_data],
-                         train_labels[:num_data]), (test_images[:num_data],
-                                                    test_labels[:num_data])
+    return num_classes, (train_images, train_labels), (test_images,
+                                                       test_labels)
 
 
 def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
@@ -329,11 +372,12 @@ def _run_single_experiment(
 
 
 def _run_single_experiment_wrapper(args):
-        return _run_single_experiment(*args)
+    return _run_single_experiment(*args)
 
 
 def _get_baseline_accuracy(cfgs: List[dict],
                            n_jobs: int,
+                           datasets: dict,
                            dbg: bool = False) -> List[dict]:
     """Calculate the baseline accuracy for all NN types (e.g., BNN/TNN).
     This is done by running the experiment with the `ideal xbar`.
@@ -376,11 +420,9 @@ def _get_baseline_accuracy(cfgs: List[dict],
     else:
         n_jobs = n_jobs
 
-    inputs = [_get_dataset(c) for c in bl_cfgs]
-    args_list = [
-        (bl_c, idx, len(bl_cfgs), inputs[idx], True)
-        for idx, bl_c in enumerate(bl_cfgs)
-    ]
+    inputs = [_get_matching_dataset(c, datasets) for c in bl_cfgs]
+    args_list = [(bl_c, idx, len(bl_cfgs), inputs[idx], True)
+                 for idx, bl_c in enumerate(bl_cfgs)]
     with multiprocessing.Pool(processes=n_jobs) as pool:
         bl_res = pool.map(_run_single_experiment_wrapper, args_list)
 
@@ -395,12 +437,36 @@ def _get_baseline_accuracy(cfgs: List[dict],
 
 
 def _get_matching_baseline(cfg: dict, baseline_accuracies: List[dict]) -> dict:
+    """Find the correct baseline accuracy for a given config.
+    Args:
+        cfg (dict): Single experiment config
+        baseline_accuracies (List[dict]): List of baseline accuracies
+    Returns:
+        dict: cfg including baseline accuracy
+    """
     keys = ['nn_name', 'nn_data', 'nn_data_set', 'batch', 'num_runs']
     matching_dict = next(
         (e for e in baseline_accuracies
          if all(e[k] == cfg[k]
                 for k in keys) and e['m_mode'][:3] == cfg['m_mode'][:3]))
     return matching_dict['top1_baseline'], matching_dict['top5_baseline']
+
+
+def _get_matching_dataset(
+    cfg: dict, datasets: dict
+) -> Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
+    """Get the matching preloaded dataset for a given experiment config.
+    Args:
+        cfg (dict): The experiment config
+        datasets (dict): List of all loaded datasets
+    Returns:
+        Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
+            The matching dataset
+    """
+    keys = ['nn_data_set', 'nn_data', 'batch', 'nn_name', 'num_runs']
+    matches = [ds for ds in datasets if all(ds[k] == cfg[k] for k in keys)]
+    assert len(matches) == 1, f"Multiple datasets match for {c}"
+    return matches[0]['data']
 
 
 def run_experiments(exp: ExpConfig,
@@ -419,18 +485,19 @@ def run_experiments(exp: ExpConfig,
     if len(cfgs) == 0:
         sys.exit(0)
 
-    baseline_accuracies = _get_baseline_accuracy(cfgs, n_jobs, dbg)
+    datasets = _get_all_datasets(cfgs)
+
+    baseline_accuracies = _get_baseline_accuracy(cfgs, n_jobs, datasets, dbg)
 
     if dbg:
         res = []
         for c_idx, c in enumerate(cfgs):
             res.append(
-                _run_single_experiment(c, c_idx, len(cfgs), _get_dataset(c)))
+                _run_single_experiment(c, c_idx, len(cfgs),
+                                       _get_matching_dataset(c, datasets)))
     else:
-        args_list = [
-            (c, c_idx, len(cfgs), _get_dataset(c))
-            for c_idx, c in enumerate(cfgs)
-        ]
+        args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets))
+                     for c_idx, c in enumerate(cfgs)]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)
