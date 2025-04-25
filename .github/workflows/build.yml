@@ -1,0 +1,37 @@
+name: Check Build
+
+on:
+  push:
+    branches: [main, dev*]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-check:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Ensure submodules are initialized
+        run: git submodule update --init --recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.4'
+
+      - name: Set up and build
+        run: |
+          python3 -m venv .venv
+          . .venv/bin/activate
+          pip install -r analog-cim-sim/requirements.txt
+          pip install -r requirements.txt
+          mkdir -p src/acs_configs
+          mkdir -p results/test
+          ./models/download_models.bash
+          ./scripts/build_simulator.bash
+          python3 src/main.py --config src/configs/test.json
