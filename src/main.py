@@ -19,7 +19,7 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument(
         '--n_jobs',
-        type=str,
+        type=int,
         help=
         'The maximum number of concurrently running jobs (joblib parameter)',
         required=False,
