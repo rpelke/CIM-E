@@ -37,11 +37,17 @@ The following steps were tested with Python 3.10.12.
 
     The name of the test is the input argument.
     ```bash
-    ./scripts/benchmark.bash exp_name=test n_jobs=4
-    ./scripts/benchmark.bash exp_name=adc n_jobs=4
-    ./scripts/benchmark.bash exp_name=lrs_var n_jobs=4
-    ./scripts/benchmark.bash exp_name=hrs_var n_jobs=4
-    ./scripts/benchmark.bash exp_name=adc_vgg7 n_jobs=4
+    ./scripts/benchmark.bash exp_name=test n_jobs=8
+    ./scripts/benchmark.bash exp_name=adc n_jobs=8
+    ./scripts/benchmark.bash exp_name=lrs_var n_jobs=8
+    ./scripts/benchmark.bash exp_name=hrs_var n_jobs=8
+    ./scripts/benchmark.bash exp_name=adc_vgg7 n_jobs=8
+    ```
+
+    Read disturb bechmarks:
+    ```bash
+    ./scripts/benchmark.bash exp_name=read_disturb n_jobs=8
+    ./scripts/benchmark.bash exp_name=read_disturb_overhead n_jobs=1
     ```
 
 1. Plot the results:

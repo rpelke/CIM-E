@@ -5,8 +5,8 @@
 # This is work is licensed under the terms described in the LICENSE file     #
 # found in the root directory of this source tree.                           #
 ##############################################################################
+from typing import List, Tuple, Optional, Union, get_type_hints
 from dataclasses import dataclass
-from typing import List, Tuple
 
 
 @dataclass
@@ -21,12 +21,16 @@ class ExpConfig:
     digital_only: bool
     hrs_lrs: List[Tuple[float]]
     adc_type: str
-    alpha: List[float]
-    resolution: List[int]
-    m_mode: List[str]
     hrs_noise: List[float]
     lrs_noise: List[float]
     verbose: bool
+    m_mode: List[str]
+    alpha: Optional[List[float]] = None
+    resolution: Optional[List[int]] = None
+    read_disturb: Optional[bool] = None
+    V_read: Optional[List[float]] = None
+    t_read: Optional[List[float]] = None
+    read_disturb_update_freq: Optional[int] = None
 
     def __check_paramters(self):
         if self.nn_data_set not in ["cifar10", "cifar100"]:
@@ -47,14 +51,18 @@ class ExpConfig:
         for (hrs, lrs) in self.hrs_lrs:
             if hrs < 0.0 or lrs <= 0.0 or hrs >= lrs:
                 raise ValueError("error in hrs_lrs should be greater than 0")
+
+        # Check ADC parameters
         if self.adc_type not in ["FP_ALPHA_ADC", "INF_ADC"]:
             raise ValueError("adc_type not valid.")
-        for a in self.alpha:
-            if a <= 0.0:
-                raise ValueError("alpha should be greater than 0")
-        for r in self.resolution:
-            if r != -1 and r <= 0:
-                raise ValueError("resolution should be greater than 0")
+        if self.adc_type != "INF_ADC":
+            for a in self.alpha:
+                if a <= 0.0:
+                    raise ValueError("alpha should be greater than 0")
+            for r in self.resolution:
+                if r != -1 and r <= 0:
+                    raise ValueError("resolution should be greater than 0")
+
         for mode in self.m_mode:
             if mode not in [
                     "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI",
@@ -68,26 +76,36 @@ class ExpConfig:
             if noise < 0.0:
                 raise ValueError("lrs_noise should be greater than 0")
 
-        # Checks for variability benchmarks
-        if (self.resolution == [-1]) or (self.adc_type == "INF_ADC"):
-            if len(self.alpha) != 1:
-                print(
-                    "alpha has no influence in this configuration. It is set to 1.0."
-                )
-                self.alpha = [1.0]
-            if (self.adc_type != "INF_ADC"):
+        # Check read disturb parameters
+        if (self.read_disturb):
+            if self.V_read is None or self.t_read is None:
                 raise ValueError(
-                    "When using resolution=[-1], adc_type should be 'INF_ADC'")
-            if (self.resolution != [-1]):
-                raise ValueError(
-                    "When using adc_type='INF_ADC', resolution should be set to [-1]"
+                    "V_read and t_read should be provided when read_disturb is True"
                 )
+            for v in self.V_read:
+                if v >= 0.0:
+                    raise ValueError(
+                        "Read disturb model requires negative V_read values")
+            for t in self.t_read:
+                if t <= 0.0:
+                    raise ValueError("t_read should be greater than 0")
+            if self.read_disturb_update_freq is not None:
+                for f in self.read_disturb_update_freq:
+                    if f <= 0:
+                        raise ValueError(
+                            "read_disturb_update_freq should be greater than 0 (minimum: 1)"
+                        )
 
     def __post_init__(self):
-        for field in self.__dataclass_fields__:
-            if getattr(self, field) is None:
-                raise ValueError(
-                    f"Argument '{field}' is missing in ExpConfig. Please provide all the required arguments."
-                )
+        type_hints = get_type_hints(self.__class__)
+        for field_name, field_type in type_hints.items():
+            value = getattr(self, field_name)
 
+            is_optional = (getattr(field_type, '__origin__', None) is Union
+                           and type(None) in field_type.__args__)
+
+            if not is_optional and value is None:
+                raise ValueError(
+                    f"Argument '{field_name}' is missing in ExpConfig. Please provide all required arguments."
+                )
         self.__check_paramters()

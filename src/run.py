@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 import ctypes
+import time
 import json
 import glob
 import sys
@@ -59,7 +60,8 @@ def iterate_experiments(exp: ExpConfig):
         'num_runs': exp.num_runs,
         'digital_only': exp.digital_only,
         'adc_type': exp.adc_type,
-        'verbose': exp.verbose
+        'verbose': exp.verbose,
+        'read_disturb': exp.read_disturb
     }
     iterable_fields = {
         'nn_name': exp.nn_names,
@@ -69,9 +71,12 @@ def iterate_experiments(exp: ExpConfig):
         'resolution': exp.resolution,
         'm_mode': exp.m_mode,
         'hrs_noise': exp.hrs_noise,
-        'lrs_noise': exp.lrs_noise
+        'lrs_noise': exp.lrs_noise,
+        'V_read': exp.V_read,
+        't_read': exp.t_read,
+        'read_disturb_update_freq': exp.read_disturb_update_freq
     }
-    ordered_fields = {"ifm": exp.ifm}
+    iterable_fields = {k: v for k, v in iterable_fields.items() if v != None}
     for combination in product(*iterable_fields.values()):
         config_entry = {**static_fields}
         for key, value in zip(iterable_fields.keys(), combination):
@@ -181,14 +186,19 @@ def _get_dataset(
 
 
 def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
-    if cfg['m_mode'] in [
-            'BNN_I', 'BNN_II', 'BNN_VI', 'TNN_I', 'TNN_II', 'TNN_III'
-    ]:
-        adc_type = "SYM_RANGE_ADC"
-    elif cfg['m_mode'] in ['BNN_III', 'BNN_IV', 'BNN_V', 'TNN_IV', 'TNN_V']:
-        adc_type = "POS_RANGE_ONLY_ADC"
+    if cfg['adc_type'] == "INF_ADC":
+        adc_type = "INF_ADC"
     else:
-        raise ValueError("m_mode not supported")
+        if cfg['m_mode'] in [
+                'BNN_I', 'BNN_II', 'BNN_VI', 'TNN_I', 'TNN_II', 'TNN_III'
+        ]:
+            adc_type = "SYM_RANGE_ADC"
+        elif cfg['m_mode'] in [
+                'BNN_III', 'BNN_IV', 'BNN_V', 'TNN_IV', 'TNN_V'
+        ]:
+            adc_type = "POS_RANGE_ONLY_ADC"
+        else:
+            raise ValueError("m_mode not supported")
 
     acs_data = {
         "M": cfg['xbar_size'][0],
@@ -197,17 +207,25 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
         "HRS": cfg['hrs_lrs'][0],
         "LRS": cfg['hrs_lrs'][1],
         "adc_type": adc_type,
-        "alpha": cfg['alpha'],
-        "resolution": cfg['resolution'],
         "m_mode": cfg['m_mode'],
         "HRS_NOISE": cfg['hrs_noise'],
         "LRS_NOISE": cfg['lrs_noise'],
         "verbose": cfg['verbose']
     }
 
-    # Set ADC to infinity
-    if acs_data["resolution"] == -1:
-        acs_data["adc_type"] = "INF_ADC"
+    # Optional parameters
+    if cfg.get('alpha') != None:
+        acs_data["alpha"] = cfg['alpha']
+    if cfg.get('resolution') != None:
+        acs_data["resolution"] = cfg['resolution']
+    if cfg.get('read_disturb') != None:
+        acs_data["read_disturb"] = cfg['read_disturb']
+    if cfg.get('V_read') != None:
+        acs_data["V_read"] = cfg['V_read']
+    if cfg.get('t_read') != None:
+        acs_data["t_read"] = cfg['t_read']
+    if cfg.get('read_disturb_update_freq') != None:
+        acs_data["read_disturb_update_freq"] = cfg['read_disturb_update_freq']
 
     if cfg['m_mode'] in ['TNN_IV', 'TNN_V']:
         acs_data["SPLIT"] = [1, 1]
@@ -295,12 +313,13 @@ def _load_emulator_lib():
 
 
 def _run_single_experiment(
-        c: dict,
-        c_idx: int,
-        num_c: int,
-        data: Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray,
-                                                              np.ndarray]],
-        ideal_xbar: bool = False) -> Tuple[dict, float, float]:
+    c: dict,
+    c_idx: int,
+    num_c: int,
+    data: Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray,
+                                                          np.ndarray]],
+    ideal_xbar: bool = False
+) -> Tuple[dict, float, float, List[float], List[float], List[int]]:
     """Run a single experiment. This function is called from multiple processes.
     Args:
         c (dict): Experiment config
@@ -336,24 +355,39 @@ def _run_single_experiment(
     top1_counter = 0
     top5_counter = 0
 
+    top1_batch = []
+    top5_batch = []
+    sim_time_batch_ns = []
+
     for run in range(c['num_runs']):
         ifm = [
             images[int(c['batch'] * run):int(c['batch'] * (run + 1)), :, :, :]
         ]
         m.set_input(0, tvm.nd.array(ifm[0].astype("float32")))
+
+        start_time = time.perf_counter_ns()
         m.run()
+        end_time = time.perf_counter_ns()
+
+        sim_time_batch_ns.append(end_time - start_time)
         out = [m.get_output(i).numpy() for i in range(m.get_num_outputs())]
 
-        top1_counter = top1_counter + sum([
+        top1_run = sum([
             1 if (np.argmax(out[0][i, :]) == labels[int(c['batch'] * run +
                                                         i)]) else 0
             for i in range(c['batch'])
         ])
-        top5_counter = top5_counter + sum([
+        top1_counter = top1_counter + top1_run
+
+        top5_run = sum([
             1 if (labels[int(c['batch'] * run +
                              i)] in np.argsort(out[0][i, :])[::-1][:5]) else 0
             for i in range(c['batch'])
         ])
+        top5_counter = top5_counter + top5_run
+
+        top1_batch.append(top1_run / c['batch'])
+        top5_batch.append(top5_run / c['batch'])
 
     top1_perc = (top1_counter / (c['num_runs'] * c['batch'])) * 100
     top5_perc = (top5_counter / (c['num_runs'] * c['batch'])) * 100
@@ -368,7 +402,7 @@ def _run_single_experiment(
         del acs_int
         del acs_lib
 
-    return c, top1_perc, top5_perc
+    return c, top1_perc, top5_perc, top1_batch, top5_batch, sim_time_batch_ns
 
 
 def _run_single_experiment_wrapper(args):
@@ -427,7 +461,7 @@ def _get_baseline_accuracy(cfgs: List[dict],
         bl_res = pool.map(_run_single_experiment_wrapper, args_list)
 
     baseline_accuracies = []
-    for c, top1_baseline, top5_baseline in bl_res:
+    for c, top1_baseline, top5_baseline, _, _, _ in bl_res:
         c.update({
             "top1_baseline": top1_baseline,
             "top5_baseline": top5_baseline
@@ -502,14 +536,17 @@ def run_experiments(exp: ExpConfig,
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)
 
-    for cfg, top1, top5 in res:
+    for cfg, top1, top5, top1_batch, top5_batch, sim_time_batch_ns in res:
         top1_baseline, top5_baseline = _get_matching_baseline(
             cfg, baseline_accuracies)
         metrics = {
             'top1': top1,
             'top5': top5,
+            'top1_batch': top1_batch,
+            'top5_batch': top5_batch,
             'top1_baseline': top1_baseline,
-            'top5_baseline': top5_baseline
+            'top5_baseline': top5_baseline,
+            'sim_time_batch_ns': sim_time_batch_ns
         }
         cfg.update(metrics)
         df = pd.concat([df, pd.DataFrame([cfg])], ignore_index=True)

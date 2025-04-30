@@ -37,22 +37,27 @@ def parse_model_string(file_name: str) -> dict:
 
 
 def create_experiment(cfg: dict) -> ExpConfig:
-    exp = ExpConfig(nn_names=cfg['nn_names'],
-                    ifm=cfg['ifm'],
-                    nn_data_set=cfg['nn_data_set'],
-                    nn_data=cfg['nn_data'],
-                    batch=cfg['batch'],
-                    num_runs=cfg['num_runs'],
-                    xbar_sizes=cfg['xbar_size'],
-                    digital_only=cfg['digital_only'],
-                    hrs_lrs=tuple(cfg['hrs_lrs']),
-                    adc_type=cfg['adc_type'],
-                    alpha=cfg['alpha'],
-                    resolution=cfg['resolution'],
-                    m_mode=cfg['m_mode'],
-                    hrs_noise=cfg['hrs_noise'],
-                    lrs_noise=cfg['lrs_noise'],
-                    verbose=cfg['verbose'])
+    exp = ExpConfig(
+        nn_names=cfg['nn_names'],
+        ifm=cfg['ifm'],
+        nn_data_set=cfg['nn_data_set'],
+        nn_data=cfg['nn_data'],
+        batch=cfg['batch'],
+        num_runs=cfg['num_runs'],
+        xbar_sizes=cfg['xbar_size'],
+        digital_only=cfg['digital_only'],
+        hrs_lrs=tuple(cfg['hrs_lrs']),
+        adc_type=cfg['adc_type'],
+        m_mode=cfg['m_mode'],
+        hrs_noise=cfg['hrs_noise'],
+        lrs_noise=cfg['lrs_noise'],
+        verbose=cfg['verbose'],
+        alpha=cfg.get('alpha'),
+        resolution=cfg.get('resolution'),
+        read_disturb=cfg.get('read_disturb'),
+        V_read=cfg.get('V_read'),
+        t_read=cfg.get('t_read'),
+        read_disturb_update_freq=cfg.get('read_disturb_update_freq'))
     return exp
 
 
