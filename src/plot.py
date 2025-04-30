@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import math
 import os
+import ast
 import argparse
 import json
 
@@ -242,6 +243,86 @@ def variability_hrs_plot(df: pd.DataFrame,
                 plt.savefig(f"{store_path}/hrs{hrs}_lrs{lrs}_hrs_noise.pdf")
 
 
+def rd_overhead_plot(df: pd.DataFrame,
+                     store_path: str,
+                     s_cat: list,
+                     d_cat: list,
+                     plt_legend_nr: int = -1) -> None:
+    for nn_name in list(df['nn_name'].unique()):
+        print(f"Generate plots for {nn_name}.")
+        df_nn = df[(df['nn_name'] == nn_name)]
+        if 'read_disturb_update_freq' in d_cat:
+            v_read = df_nn['V_read'].unique()
+            for v in v_read:
+                df_nn_v = df_nn[(df_nn['V_read'] == v)]
+                t_read = df_nn_v['t_read'].unique()
+                for t in t_read:
+                    df_nn_t = df_nn_v[(df_nn_v['t_read'] == t)]
+                    freq = df_nn_t['read_disturb_update_freq'].unique()
+
+                    # Plot accuracy
+                    plt.figure(figsize=(3.5, 3))
+                    plt.rcParams['font.family'] = 'serif'
+                    plt.xlabel(
+                        f"Batch @batch_size={df_nn_t['batch'].unique()[0]}",
+                        fontsize=14)
+                    plt.ylabel('Top-1 Accuracy (%)', fontsize=14)
+
+                    for f_idx, f in enumerate(freq):
+                        df_nn_f = df_nn_t[(
+                            df_nn_t['read_disturb_update_freq'] == f)]
+                        assert len(df_nn_f) == 1
+
+                        num_runs = df_nn_f['num_runs'].unique()[0]
+                        top1 = df_nn_f['top1_batch'].unique()[0]
+                        top1 = ast.literal_eval(top1)
+
+                        plt.plot(range(1, num_runs + 1),
+                                 top1,
+                                 marker='x',
+                                 label=f"{f}",
+                                 color=colors[f_idx])
+
+                    plt.legend(loc='lower left', fontsize=12, ncol=1)
+                    plt.xticks(fontsize=14)
+                    plt.yticks(fontsize=14)
+                    plt.tight_layout()
+                    plt.savefig(f"{store_path}/vread{v}_tread{t}_accuracy.png")
+                    plt.savefig(f"{store_path}/vread{v}_tread{t}_accuracy.pdf")
+                    plt.close()
+
+                    # Plot simulation time
+                    sim_times_median = []
+                    for f_idx, f in enumerate(freq):
+                        df_nn_f = df_nn_t[(
+                            df_nn_t['read_disturb_update_freq'] == f)]
+                        assert len(df_nn_f) == 1
+
+                        sim_time = df_nn_f['sim_time_batch_ns'].iloc[0]
+                        sim_time = ast.literal_eval(sim_time)
+                        sim_times_median.append(np.median(sim_time))
+
+                    plt.figure(figsize=(4.2, 3))
+                    plt.rcParams['font.family'] = 'serif'
+                    plt.xlabel('Update frequency', fontsize=14)
+                    plt.ylabel('Simulation time (ns)', fontsize=14)
+                    plt.bar(x=range(1,
+                                    len(freq) + 1),
+                            height=sim_times_median,
+                            color=colors[:len(freq)])
+                    plt.xticks(ticks=range(1,
+                                           len(freq) + 1),
+                               labels=freq,
+                               rotation=45,
+                               ha='center',
+                               fontsize=14)
+                    plt.yticks(fontsize=14)
+                    plt.tight_layout()
+                    plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.png")
+                    plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.pdf")
+                    plt.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
@@ -296,5 +377,10 @@ if __name__ == "__main__":
                              s_cat=cat_static,
                              d_cat=cat_dynamic,
                              plt_legend_nr=0)
+    elif exp_name == 'read_disturb_overhead':
+        rd_overhead_plot(df=df,
+                         store_path=store_path,
+                         s_cat=cat_static,
+                         d_cat=cat_dynamic)
     else:
         raise Exception(f"Plot for experiment {exp_name} not implemented.")

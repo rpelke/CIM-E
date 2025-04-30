@@ -24,7 +24,7 @@
     "lrs_noise": [0.0],
     "verbose": false,
     "read_disturb": true,
-    "V_read": [-0.6],
+    "V_read": [-0.4],
     "t_read": [100e-9],
-    "read_disturb_update_freq": [10000, 1000, 500]
+    "read_disturb_update_freq": [10000, 1000, 500, 100, 10, 1]
 }
