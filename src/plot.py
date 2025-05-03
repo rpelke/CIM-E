@@ -322,6 +322,51 @@ def rd_overhead_plot(df: pd.DataFrame,
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.pdf")
                     plt.close()
 
+                    # Plot speedup
+                    speedup = []
+                    df_nn_f_1 = df_nn_t[(
+                        df_nn_t['read_disturb_update_freq'] == 1)]
+
+                    if len(df_nn_f_1) == 1:
+                        sim_time_batch_ns_1 = df_nn_f_1[
+                            'sim_time_batch_ns'].iloc[0]
+                        sim_time_batch_ns_1 = ast.literal_eval(
+                            sim_time_batch_ns_1)
+                        sim_time_batch_ns_1 = np.median(sim_time_batch_ns_1)
+
+                        for f_idx, f in enumerate(freq):
+                            df_nn_f = df_nn_t[(
+                                df_nn_t['read_disturb_update_freq'] == f)]
+                            assert len(df_nn_f) == 1
+
+                            sim_time = df_nn_f['sim_time_batch_ns'].iloc[0]
+                            sim_time = ast.literal_eval(sim_time)
+                            sim_times_median = np.median(sim_time)
+                            speedup.append(sim_time_batch_ns_1 /
+                                           sim_times_median)
+
+                        plt.figure(figsize=(4.2, 3))
+                        plt.rcParams['font.family'] = 'serif'
+                        plt.xlabel('Update frequency', fontsize=14)
+                        plt.ylabel('Speedup', fontsize=14)
+                        plt.bar(x=range(1,
+                                        len(freq) + 1),
+                                height=speedup,
+                                color=colors[:len(freq)])
+                        plt.xticks(ticks=range(1,
+                                               len(freq) + 1),
+                                   labels=freq,
+                                   rotation=45,
+                                   ha='center',
+                                   fontsize=14)
+                        plt.yticks(fontsize=14)
+                        plt.tight_layout()
+                        plt.savefig(
+                            f"{store_path}/vread{v}_tread{t}_speedup.png")
+                        plt.savefig(
+                            f"{store_path}/vread{v}_tread{t}_speedup.pdf")
+                        plt.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
