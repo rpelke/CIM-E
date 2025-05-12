@@ -259,6 +259,9 @@ def rd_overhead_plot(df: pd.DataFrame,
                 for t in t_read:
                     df_nn_t = df_nn_v[(df_nn_v['t_read'] == t)]
                     freq = df_nn_t['read_disturb_update_freq'].unique()
+                    print(
+                        f"----------Accuracy: t_read: {t}, v_read: {v}, nn: {nn_name}----------"
+                    )
 
                     # Plot accuracy
                     plt.figure(figsize=(3.5, 3))
@@ -282,6 +285,9 @@ def rd_overhead_plot(df: pd.DataFrame,
                                  marker='x',
                                  label=f"{f}",
                                  color=colors[f_idx])
+                        print(
+                            f"Update freq: {f}: Top-1%: {round(100 * sum(top1) / len(top1), 2)}"
+                        )
 
                     plt.legend(loc='lower left', fontsize=12, ncol=1)
                     plt.xticks(fontsize=14)
@@ -293,11 +299,12 @@ def rd_overhead_plot(df: pd.DataFrame,
 
                     # Plot simulation time
                     sim_times_median = []
+                    labels = []
                     for f_idx, f in enumerate(freq):
                         df_nn_f = df_nn_t[(
                             df_nn_t['read_disturb_update_freq'] == f)]
                         assert len(df_nn_f) == 1
-
+                        labels.append(f"{f}")
                         sim_time = df_nn_f['sim_time_batch_ns'].iloc[0]
                         sim_time = ast.literal_eval(sim_time)
                         sim_times_median.append(np.median(sim_time))
@@ -309,14 +316,16 @@ def rd_overhead_plot(df: pd.DataFrame,
                     plt.bar(x=range(1,
                                     len(freq) + 1),
                             height=sim_times_median,
+                            label=labels,
                             color=colors[:len(freq)])
                     plt.xticks(ticks=range(1,
                                            len(freq) + 1),
-                               labels=freq,
                                rotation=45,
+                               labels=freq,
                                ha='center',
                                fontsize=14)
                     plt.yticks(fontsize=14)
+                    plt.legend(loc='upper left', fontsize=12, ncol=2)
                     plt.tight_layout()
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.png")
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.pdf")
@@ -334,11 +343,12 @@ def rd_overhead_plot(df: pd.DataFrame,
                             sim_time_batch_ns_1)
                         sim_time_batch_ns_1 = np.median(sim_time_batch_ns_1)
 
+                        labels = []
                         for f_idx, f in enumerate(freq):
                             df_nn_f = df_nn_t[(
                                 df_nn_t['read_disturb_update_freq'] == f)]
                             assert len(df_nn_f) == 1
-
+                            labels.append(f"{f}")
                             sim_time = df_nn_f['sim_time_batch_ns'].iloc[0]
                             sim_time = ast.literal_eval(sim_time)
                             sim_times_median = np.median(sim_time)
@@ -352,6 +362,7 @@ def rd_overhead_plot(df: pd.DataFrame,
                         plt.bar(x=range(1,
                                         len(freq) + 1),
                                 height=speedup,
+                                label=labels,
                                 color=colors[:len(freq)])
                         plt.xticks(ticks=range(1,
                                                len(freq) + 1),
@@ -360,6 +371,7 @@ def rd_overhead_plot(df: pd.DataFrame,
                                    ha='center',
                                    fontsize=14)
                         plt.yticks(fontsize=14)
+                        plt.legend(loc='upper right', fontsize=12, ncol=2)
                         plt.tight_layout()
                         plt.savefig(
                             f"{store_path}/vread{v}_tread{t}_speedup.png")
@@ -422,7 +434,7 @@ if __name__ == "__main__":
                              s_cat=cat_static,
                              d_cat=cat_dynamic,
                              plt_legend_nr=0)
-    elif exp_name == 'read_disturb_overhead':
+    elif exp_name == 'read_disturb_simulation_time':
         rd_overhead_plot(df=df,
                          store_path=store_path,
                          s_cat=cat_static,

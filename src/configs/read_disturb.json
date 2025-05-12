@@ -26,6 +26,6 @@
     "verbose": false,
     "read_disturb": true,
     "V_read": [-0.3, -0.4, -0.5, -0.6],
-    "t_read": [100e-9],
+    "t_read": [100e-9, 100e-7],
     "read_disturb_update_freq": [100]
 }
