@@ -1,0 +1,27 @@
+{
+    "nn_names": [
+        "VGG7"
+    ],
+    "ifm" : [
+        [32, 32, 3]
+    ],
+    "nn_data_set": "cifar10",
+    "nn_data": "TRAIN",
+    "batch": 200,
+    "num_runs": 20,
+    "xbar_size": [
+        [256, 256]
+    ],
+    "digital_only": false,
+    "hrs_lrs": [
+        [5.0, 30.0]
+    ],
+    "adc_type": "INF_ADC",
+    "m_mode": [
+        "BNN_I"
+    ],
+    "hrs_noise": [0.0],
+    "lrs_noise": [0.0],
+    "verbose": false,
+    "read_disturb": false
+}

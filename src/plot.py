@@ -243,7 +243,7 @@ def variability_hrs_plot(df: pd.DataFrame,
                 plt.savefig(f"{store_path}/hrs{hrs}_lrs{lrs}_hrs_noise.pdf")
 
 
-def rd_overhead_plot(df: pd.DataFrame,
+def rd_sim_time_plot(df: pd.DataFrame,
                      store_path: str,
                      s_cat: list,
                      d_cat: list,
@@ -260,7 +260,7 @@ def rd_overhead_plot(df: pd.DataFrame,
                     df_nn_t = df_nn_v[(df_nn_v['t_read'] == t)]
                     freq = df_nn_t['read_disturb_update_freq'].unique()
                     print(
-                        f"----------Accuracy: t_read: {t}, v_read: {v}, nn: {nn_name}----------"
+                        f"-----Accuracy: t_read: {t}, v_read: {v}, nn: {nn_name}-----"
                     )
 
                     # Plot accuracy
@@ -271,6 +271,7 @@ def rd_overhead_plot(df: pd.DataFrame,
                         fontsize=14)
                     plt.ylabel('Top-1 Accuracy (%)', fontsize=14)
 
+                    top1_dict = {}
                     for f_idx, f in enumerate(freq):
                         df_nn_f = df_nn_t[(
                             df_nn_t['read_disturb_update_freq'] == f)]
@@ -279,6 +280,7 @@ def rd_overhead_plot(df: pd.DataFrame,
                         num_runs = df_nn_f['num_runs'].unique()[0]
                         top1 = df_nn_f['top1_batch'].unique()[0]
                         top1 = ast.literal_eval(top1)
+                        top1_dict[f] = top1
 
                         plt.plot(range(1, num_runs + 1),
                                  top1,
@@ -295,7 +297,32 @@ def rd_overhead_plot(df: pd.DataFrame,
                     plt.tight_layout()
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_accuracy.png")
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_accuracy.pdf")
+                    csv_df = pd.DataFrame({
+                        'batchnum': range(1, num_runs + 1),
+                        **top1_dict
+                    })
+                    csv_df.to_csv(
+                        f"{store_path}/vread{v}_tread{t}_accuracy.csv",
+                        index=False)
                     plt.close()
+
+                    # Print accuracy error per batch
+                    print(
+                        "-----Accuracy error per batch for t_read: {t}, v_read: {v}, nn: {nn_name}-----"
+                    )
+                    acc_baseline = top1_dict[1]
+                    for f, acc in top1_dict.items():
+                        if f != 1:
+                            error = 100 * (np.array(acc_baseline) -
+                                           np.array(acc))
+                            print(f"Update rate {f}:")
+                            print(
+                                f"Max. absolute error: {round(max(abs(error)), 2)}%"
+                            )
+                            print(
+                                f"Mean absolute error: {round(np.mean(abs(error)), 2)}%"
+                            )
+                            print([f"{round(e, 2)}%" for e in error])
 
                     # Plot simulation time
                     sim_times_median = []
@@ -329,6 +356,13 @@ def rd_overhead_plot(df: pd.DataFrame,
                     plt.tight_layout()
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.png")
                     plt.savefig(f"{store_path}/vread{v}_tread{t}_sim_time.pdf")
+                    csv_df = pd.DataFrame({
+                        'Freq': freq,
+                        'SimTime': sim_times_median
+                    })
+                    csv_df.to_csv(
+                        f"{store_path}/vread{v}_tread{t}_sim_time.csv",
+                        index=False)
                     plt.close()
 
                     # Plot speedup
@@ -377,7 +411,49 @@ def rd_overhead_plot(df: pd.DataFrame,
                             f"{store_path}/vread{v}_tread{t}_speedup.png")
                         plt.savefig(
                             f"{store_path}/vread{v}_tread{t}_speedup.pdf")
+                        csv_df = pd.DataFrame({
+                            'Freq': freq,
+                            'Speedup': speedup
+                        })
+                        csv_df.to_csv(
+                            f"{store_path}/vread{v}_tread{t}_speedup.csv",
+                            index=False)
                         plt.close()
+
+
+def rd_overhead_plot(df: pd.DataFrame,
+                     df_baseline: pd.DataFrame,
+                     store_path: str,
+                     s_cat: list,
+                     d_cat: list,
+                     plt_legend_nr: int = -1) -> None:
+    baseline = [dict(row) for idx, row in df_baseline.iterrows()]
+    for bl in baseline:
+        bl_sim_time = ast.literal_eval(bl['sim_time_batch_ns'])
+        keys = [
+            'nn_data_set', 'nn_data', 'batch', 'num_runs', 'digital_only',
+            'adc_type', 'verbose', 'nn_name', 'xbar_size', 'hrs_lrs', 'm_mode',
+            'hrs_noise', 'lrs_noise', 'ifm'
+        ]
+        df_entries = df[np.logical_and.reduce(
+            [df[key] == bl[key] for key in keys])]
+
+        for v in df_entries['V_read'].unique():
+            df_v = df_entries[(df_entries['V_read'] == v)]
+            for t in df_entries['t_read'].unique():
+                df_t = df_v[(df_v['t_read'] == t)]
+                assert len(
+                    df_t['read_disturb_update_freq'].unique()) == len(df_t)
+                print(
+                    f"Read disturb simulation overhead for V_read: {v}, t_read: {t}"
+                )
+                for f in df_t['read_disturb_update_freq'].unique():
+                    df_f = df_t[(df_t['read_disturb_update_freq'] == f)]
+                    sim_time = ast.literal_eval(
+                        df_f['sim_time_batch_ns'].iloc[0])
+                    overhead_perc = 100 * (
+                        np.median(sim_time) / np.median(bl_sim_time) - 1)
+                    print(f"Update freq: {f}: {round(overhead_perc, 2)}%")
 
 
 if __name__ == "__main__":
@@ -394,9 +470,23 @@ if __name__ == "__main__":
 
     exp_name = args.config.split('/')[-1].split('.json')[0]
     repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
-    exp_result_path = repo_path + '/results/' + exp_name
 
-    df = pd.read_csv(f"{exp_result_path}/{exp_name}.csv")
+    if exp_name == 'read_disturb_simulation_overhead':
+        exp_result_path = repo_path + '/results/read_disturb_simulation_time'
+        baseline_path = repo_path + '/results/' + exp_name
+        try:
+            df = pd.read_csv(
+                f"{exp_result_path}/read_disturb_simulation_time.csv")
+        except:
+            print(
+                f"Error: {exp_name} experiment needs both 'read_disturb_simulation_time.csv' and '{exp_name}.csv'"
+            )
+            raise
+        df_baseline = pd.read_csv(f"{baseline_path}/{exp_name}.csv")
+    else:
+        exp_result_path = repo_path + '/results/' + exp_name
+        df = pd.read_csv(f"{exp_result_path}/{exp_name}.csv")
+
     categories = df.columns
     cat_static = []  # Categories (columns) that all experiments have in common
     cat_dynamic = []  # Categories that change for at least one experiment
@@ -435,7 +525,13 @@ if __name__ == "__main__":
                              d_cat=cat_dynamic,
                              plt_legend_nr=0)
     elif exp_name == 'read_disturb_simulation_time':
+        rd_sim_time_plot(df=df,
+                         store_path=store_path,
+                         s_cat=cat_static,
+                         d_cat=cat_dynamic)
+    elif exp_name == 'read_disturb_simulation_overhead':
         rd_overhead_plot(df=df,
+                         df_baseline=df_baseline,
                          store_path=store_path,
                          s_cat=cat_static,
                          d_cat=cat_dynamic)
