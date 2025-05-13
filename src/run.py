@@ -318,7 +318,8 @@ def _run_single_experiment(
     num_c: int,
     data: Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray,
                                                           np.ndarray]],
-    ideal_xbar: bool = False
+    ideal_xbar: bool = False,
+    use_same_inputs: bool = False
 ) -> Tuple[dict, float, float, List[float], List[float], List[int]]:
     """Run a single experiment. This function is called from multiple processes.
     Args:
@@ -327,6 +328,7 @@ def _run_single_experiment(
         num_c (int): Total number of experiments
         data (Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]): IFM/OFM data
         ideal_xbar (bool, optional): Switch off any non-idealities (if true). Defaults to False.
+        use_same_inputs (bool, optional): Use the same inputs for all runs. Defaults to False.
     Returns:
         Tuple[dict, float, float]: cfg c, top 1% accuracy, top 5% accuracy
     """
@@ -360,9 +362,13 @@ def _run_single_experiment(
     sim_time_batch_ns = []
 
     for run in range(c['num_runs']):
-        ifm = [
-            images[int(c['batch'] * run):int(c['batch'] * (run + 1)), :, :, :]
-        ]
+        if use_same_inputs:
+            ifm = [images[0:int(c['batch']), :, :, :]]
+        else:
+            ifm = [
+                images[int(c['batch'] * run):int(c['batch'] *
+                                                 (run + 1)), :, :, :]
+            ]
         m.set_input(0, tvm.nd.array(ifm[0].astype("float32")))
 
         start_time = time.perf_counter_ns()
@@ -412,7 +418,8 @@ def _run_single_experiment_wrapper(args):
 def _get_baseline_accuracy(cfgs: List[dict],
                            n_jobs: int,
                            datasets: dict,
-                           dbg: bool = False) -> List[dict]:
+                           dbg: bool = False,
+                           use_same_inputs: bool = False) -> List[dict]:
     """Calculate the baseline accuracy for all NN types (e.g., BNN/TNN).
     This is done by running the experiment with the `ideal xbar`.
     Ideal xbar means that we are using the crossbar emulator backend
@@ -455,7 +462,7 @@ def _get_baseline_accuracy(cfgs: List[dict],
         n_jobs = n_jobs
 
     inputs = [_get_matching_dataset(c, datasets) for c in bl_cfgs]
-    args_list = [(bl_c, idx, len(bl_cfgs), inputs[idx], True)
+    args_list = [(bl_c, idx, len(bl_cfgs), inputs[idx], True, use_same_inputs)
                  for idx, bl_c in enumerate(bl_cfgs)]
     with multiprocessing.Pool(processes=n_jobs) as pool:
         bl_res = pool.map(_run_single_experiment_wrapper, args_list)
@@ -506,7 +513,8 @@ def _get_matching_dataset(
 def run_experiments(exp: ExpConfig,
                     exp_name: str,
                     n_jobs: int,
-                    dbg: bool = False):
+                    dbg: bool = False,
+                    use_same_inputs: bool = False) -> None:
     _check_pathes()
     cfgs = iterate_experiments(exp)
 
@@ -521,17 +529,19 @@ def run_experiments(exp: ExpConfig,
 
     datasets = _get_all_datasets(cfgs)
 
-    baseline_accuracies = _get_baseline_accuracy(cfgs, n_jobs, datasets, dbg)
+    baseline_accuracies = _get_baseline_accuracy(cfgs, n_jobs, datasets, dbg,
+                                                 use_same_inputs)
 
     if dbg:
         res = []
         for c_idx, c in enumerate(cfgs):
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs),
-                                       _get_matching_dataset(c, datasets)))
+                                       _get_matching_dataset(c, datasets),
+                                       False, use_same_inputs))
     else:
-        args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets))
-                     for c_idx, c in enumerate(cfgs)]
+        args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets),
+                      False, use_same_inputs) for c_idx, c in enumerate(cfgs)]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)
