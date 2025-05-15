@@ -378,18 +378,30 @@ def _run_single_experiment(
         sim_time_batch_ns.append(end_time - start_time)
         out = [m.get_output(i).numpy() for i in range(m.get_num_outputs())]
 
-        top1_run = sum([
-            1 if (np.argmax(out[0][i, :]) == labels[int(c['batch'] * run +
-                                                        i)]) else 0
-            for i in range(c['batch'])
-        ])
-        top1_counter = top1_counter + top1_run
+        if use_same_inputs:
+            top1_run = sum([
+                1 if (np.argmax(out[0][i, :]) == labels[i]) else 0
+                for i in range(c['batch'])
+            ])
+            top5_run = sum([
+                1 if (labels[i] in np.argsort(out[0][i, :])[::-1][:5]) else 0
+                for i in range(c['batch'])
+            ])
 
-        top5_run = sum([
-            1 if (labels[int(c['batch'] * run +
-                             i)] in np.argsort(out[0][i, :])[::-1][:5]) else 0
-            for i in range(c['batch'])
-        ])
+        else:
+            top1_run = sum([
+                1 if (np.argmax(out[0][i, :]) == labels[int(c['batch'] * run +
+                                                            i)]) else 0
+                for i in range(c['batch'])
+            ])
+            top5_run = sum([
+                1 if
+                (labels[int(c['batch'] * run +
+                            i)] in np.argsort(out[0][i, :])[::-1][:5]) else 0
+                for i in range(c['batch'])
+            ])
+
+        top1_counter = top1_counter + top1_run
         top5_counter = top5_counter + top5_run
 
         top1_batch.append(top1_run / c['batch'])
