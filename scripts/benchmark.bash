@@ -31,6 +31,15 @@ for ARG in "$@"; do
             N_JOBS="${ARG#*=}"
             shift
             ;;
+        use_same_inputs=*)
+            VALUE="${ARG#*=}"
+            if [ "$VALUE" = "True" ]; then
+                USE_SAME_INPUTS="--use_same_inputs"
+            else
+                USE_SAME_INPUTS=""
+            fi
+            shift
+            ;;
         *)
             echo "Unknown argument: $ARG"
             exit 1
@@ -65,4 +74,4 @@ docker run -it --rm --memory=4g $DOCKER_FLAGS \
     -v ${PROJ_DIR}/src:/apps/src:Z \
     -v ${PROJ_DIR}/models:/apps/models:Z \
     -v ${PROJ_DIR}/results:/apps/results:Z \
-    cim-e $EXP_NAME $N_JOBS
+    cim-e $EXP_NAME $N_JOBS $USE_SAME_INPUTS

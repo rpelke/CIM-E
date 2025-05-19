@@ -8,14 +8,13 @@
     "nn_data_set": "cifar10",
     "nn_data": "TRAIN",
     "batch": 200,
-    "num_runs": 50,
+    "num_runs": 20,
     "xbar_size": [
         [256, 256]
     ],
     "digital_only": false,
     "hrs_lrs": [
-        [5.0, 30.0],
-        [5.0, 50.0]
+        [5.0, 30.0]
     ],
     "adc_type": "INF_ADC",
     "m_mode": [
@@ -25,7 +24,7 @@
     "lrs_noise": [0.0],
     "verbose": false,
     "read_disturb": true,
-    "V_read": [-0.3, -0.4, -0.5, -0.6],
-    "t_read": [100e-9, 100e-7],
+    "V_read": [-0.2, -0.3, -0.4, -0.5],
+    "t_read": [100e-9, 10e-9, 1e-9],
     "read_disturb_update_freq": [100]
 }

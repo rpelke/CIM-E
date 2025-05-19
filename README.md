@@ -47,7 +47,8 @@ The following steps were tested with Python 3.10.12.
     Read disturb bechmarks:
     ```bash
     ./scripts/benchmark.bash exp_name=read_disturb n_jobs=8
-    ./scripts/benchmark.bash exp_name=read_disturb_simulation_time n_jobs=1
+    ./scripts/benchmark.bash exp_name=read_disturb_simulation_time n_jobs=8 use_same_inputs=True
+    ./scripts/benchmark.bash exp_name=read_disturb_simulation_overhead n_jobs=8 use_same_inputs=True
     ```
 
 1. Plot the results:

@@ -54,27 +54,33 @@ def _check_pathes():
 def iterate_experiments(exp: ExpConfig):
     cfg = []
     static_fields = {
-        'nn_data_set': exp.nn_data_set,
-        'nn_data': exp.nn_data,
-        'batch': exp.batch,
-        'num_runs': exp.num_runs,
-        'digital_only': exp.digital_only,
-        'adc_type': exp.adc_type,
-        'verbose': exp.verbose,
-        'read_disturb': exp.read_disturb
+        key: value
+        for key, value in {
+            'nn_data_set': exp.nn_data_set,
+            'nn_data': exp.nn_data,
+            'batch': exp.batch,
+            'num_runs': exp.num_runs,
+            'digital_only': exp.digital_only,
+            'adc_type': exp.adc_type,
+            'verbose': exp.verbose,
+            'read_disturb': exp.read_disturb
+        }.items() if value is not None
     }
     iterable_fields = {
-        'nn_name': exp.nn_names,
-        'xbar_size': exp.xbar_sizes,
-        'hrs_lrs': exp.hrs_lrs,
-        'alpha': exp.alpha,
-        'resolution': exp.resolution,
-        'm_mode': exp.m_mode,
-        'hrs_noise': exp.hrs_noise,
-        'lrs_noise': exp.lrs_noise,
-        'V_read': exp.V_read,
-        't_read': exp.t_read,
-        'read_disturb_update_freq': exp.read_disturb_update_freq
+        key: value
+        for key, value in {
+            'nn_name': exp.nn_names,
+            'xbar_size': exp.xbar_sizes,
+            'hrs_lrs': exp.hrs_lrs,
+            'alpha': exp.alpha,
+            'resolution': exp.resolution,
+            'm_mode': exp.m_mode,
+            'hrs_noise': exp.hrs_noise,
+            'lrs_noise': exp.lrs_noise,
+            'V_read': exp.V_read,
+            't_read': exp.t_read,
+            'read_disturb_update_freq': exp.read_disturb_update_freq
+        }.items() if value is not None
     }
     iterable_fields = {k: v for k, v in iterable_fields.items() if v != None}
     for combination in product(*iterable_fields.values()):
