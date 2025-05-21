@@ -119,6 +119,8 @@ The following steps were tested with Python 3.10.12.
 ## Development Only
 1. Native build of the simulator (without docker):
 
+    You need a `python-dev` version since [pybind11](analog-cim-sim/cpp/CMakeLists.txt) needs the `Python.h` header file.
+
     ```bash
     python3 -m venv .venv
     source .venv/bin/activate
