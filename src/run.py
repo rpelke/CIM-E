@@ -100,7 +100,8 @@ def iterate_experiments(exp: ExpConfig):
 
 
 def _get_all_datasets(
-    cfgs: List[dict]
+    cfgs: List[dict],
+    use_same_inputs: bool = False
 ) -> dict[str, str, str, int, int, Tuple[int, Tuple[np.ndarray, np.ndarray],
                                          Tuple[np.ndarray, np.ndarray]]]:
     """Preload and preprocess all datasets needed for the experiments.
@@ -114,6 +115,7 @@ def _get_all_datasets(
         set((c['nn_data_set'], c['nn_data'], c['nn_name'], c['batch'],
              c['num_runs']) for c in cfgs))
     datasets = []
+    nr_si = 1 if use_same_inputs else nr
     for (ds, dst, nn, b, nr) in data_set_info:
         datasets.append({
             'nn_data_set': ds,
@@ -121,7 +123,7 @@ def _get_all_datasets(
             'nn_name': nn,
             'batch': b,
             'num_runs': nr,
-            'data': _get_dataset(nn, ds, b * nr)
+            'data': _get_dataset(nn, ds, b * nr_si)
         })
     return datasets
 
@@ -524,7 +526,7 @@ def _get_matching_dataset(
     """
     keys = ['nn_data_set', 'nn_data', 'batch', 'nn_name', 'num_runs']
     matches = [ds for ds in datasets if all(ds[k] == cfg[k] for k in keys)]
-    assert len(matches) == 1, f"Multiple datasets match for {c}"
+    assert len(matches) == 1, f"Multiple datasets match."
     return matches[0]['data']
 
 
@@ -545,7 +547,7 @@ def run_experiments(exp: ExpConfig,
     if len(cfgs) == 0:
         sys.exit(0)
 
-    datasets = _get_all_datasets(cfgs)
+    datasets = _get_all_datasets(cfgs, use_same_inputs)
 
     baseline_accuracies = _get_baseline_accuracy(cfgs, n_jobs, datasets, dbg,
                                                  use_same_inputs)

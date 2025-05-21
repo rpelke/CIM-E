@@ -456,6 +456,53 @@ def rd_overhead_plot(df: pd.DataFrame,
                     print(f"Update freq: {f}: {round(overhead_perc, 2)}%")
 
 
+def read_disturb_plot(df: pd.DataFrame, store_path: str, s_cat: list,
+                      d_cat: list) -> None:
+    for nn_name in list(df['nn_name'].unique()):
+        print(f"Generate plots for {nn_name}.")
+        df_nn = df[(df['nn_name'] == nn_name)]
+
+        # Extend this plot if one of the following parameters changes
+        assert len(df_nn['hrs_noise'].unique()) == 1
+        assert len(df_nn['lrs_noise'].unique()) == 1
+        assert len(df_nn['m_mode'].unique()) == 1
+        assert len(df_nn['hrs_lrs'].unique()) == 1
+        assert len(df_nn['read_disturb_update_freq'].unique()) == 1
+
+        t_read = df_nn['t_read'].unique()
+        for t in t_read:
+            df_tread = df_nn[(df_nn['t_read'] == t)]
+
+            # Plot accuracy
+            plt.figure(figsize=(3.5, 3))
+            plt.rcParams['font.family'] = 'serif'
+
+            V_read = df_tread['V_read'].unique()
+            for v_idx, v in enumerate(V_read):
+                df_vread = df_tread[(df_tread['V_read'] == v)]
+                assert len(df_vread) == 1
+                top1 = ast.literal_eval(df_vread['top1_batch'].iloc[0])
+                num_runs = df_vread['num_runs'].iloc[0]
+
+                plt.plot(range(1, num_runs + 1),
+                         top1,
+                         marker='x',
+                         label=f"{v} V",
+                         color=colors[v_idx])
+
+            plt.xlabel('Batch @batch_size=' +
+                       str(df_tread['batch'].unique()[0]),
+                       fontsize=14)
+            plt.ylabel('Top-1 Accuracy (%)', fontsize=14)
+            plt.legend(loc='lower left', fontsize=12, ncol=2)
+            plt.xticks(fontsize=14)
+            plt.yticks(fontsize=14)
+            plt.tight_layout()
+            plt.savefig(f"{store_path}/{nn_name}_tread{t}_read_disturb.png")
+            plt.savefig(f"{store_path}/{nn_name}_tread{t}_read_disturb.pdf")
+            plt.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
@@ -535,5 +582,10 @@ if __name__ == "__main__":
                          store_path=store_path,
                          s_cat=cat_static,
                          d_cat=cat_dynamic)
+    elif exp_name == 'read_disturb':
+        read_disturb_plot(df=df,
+                          store_path=store_path,
+                          s_cat=cat_static,
+                          d_cat=cat_dynamic)
     else:
         raise Exception(f"Plot for experiment {exp_name} not implemented.")

@@ -1,14 +1,18 @@
 {
     "nn_names": [
-        "VGG7"
+        "BinaryNet",
+        "BinaryDenseNet37",
+        "BinaryDenseNet28"
     ],
     "ifm" : [
+        [32, 32, 3],
+        [32, 32, 3],
         [32, 32, 3]
     ],
-    "nn_data_set": "cifar10",
+    "nn_data_set": "cifar100",
     "nn_data": "TRAIN",
     "batch": 200,
-    "num_runs": 20,
+    "num_runs": 100,
     "xbar_size": [
         [256, 256]
     ],
@@ -24,7 +28,7 @@
     "lrs_noise": [0.0],
     "verbose": false,
     "read_disturb": true,
-    "V_read": [-0.2, -0.3, -0.4, -0.5],
+    "V_read": [-0.2, -0.3, -0.4],
     "t_read": [100e-9, 10e-9, 1e-9],
     "read_disturb_update_freq": [100]
 }
