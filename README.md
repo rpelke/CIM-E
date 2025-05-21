@@ -5,6 +5,20 @@
 CIM-E optimizes BNN and TNN inference for RRAM crossbars.
 It uses the mappings and the crossbar simulator from [analog-cim-sim](https://github.com/rpelke/analog-cim-sim).
 
+If you find this repository helpful, please consider citing the corresponding [paper](https://arxiv.org/abs/2505.14303):
+```
+@misc{pelke2025optimizingbinaryternaryneural,
+    title={{Optimizing Binary and Ternary Neural Network Inference on RRAM Crossbars using CIM-Explorer}}, 
+    author={Rebecca Pelke and José Cubero-Cascante and Nils Bosbach and Niklas Degener and Florian Idrizi and Lennart M. Reimann and Jan Moritz Joseph and Rainer Leupers},
+    year={2025},
+    eprint={2505.14303},
+    archivePrefix={arXiv},
+    primaryClass={cs.ET},
+    url={https://arxiv.org/abs/2505.14303}, 
+}
+```
+
+
 ## Build Instructions
 To build the project, you need cmake and a *dev version* of python.
 If you don't have python3-dev, the simulator won't compile.
@@ -31,6 +45,7 @@ The following steps were tested with Python 3.10.12.
     This project is designed to run rootless, so you can also use `podman`.
     Make sure `podman-docker` is installed or create an alias for docker that points to podman.
 
+
 ## Run Simulations
 
 1. Execute the benchmarks with docker:
@@ -44,14 +59,7 @@ The following steps were tested with Python 3.10.12.
     ./scripts/benchmark.bash exp_name=adc_vgg7 n_jobs=8
     ```
 
-    Read disturb bechmarks:
-    ```bash
-    ./scripts/benchmark.bash exp_name=read_disturb n_jobs=8
-    ./scripts/benchmark.bash exp_name=read_disturb_simulation_time n_jobs=8 use_same_inputs=True
-    ./scripts/benchmark.bash exp_name=read_disturb_simulation_overhead n_jobs=8 use_same_inputs=True
-    ```
-
-1. Plot the results:
+1. Visualize the results:
 
     ```bash
     python3 src/plot.py --config <path_to_config>
@@ -149,10 +157,11 @@ The following steps were tested with Python 3.10.12.
         "console": "integratedTerminal",
         "justMyCode": false,
         "args": [
-            "--debug", // Optional: Single-core execution
+            "--debug", // Optional: Single-thread execution
             "--config",
             "${workspaceFolder}/src/configs/test.json",
-            "--n_jobs", "4"
+            "--n_jobs", "4",
+            "--use_same_inputs" // Optional: Use the same IFMs for each run
         ]
     }
     ```

@@ -115,8 +115,8 @@ def _get_all_datasets(
         set((c['nn_data_set'], c['nn_data'], c['nn_name'], c['batch'],
              c['num_runs']) for c in cfgs))
     datasets = []
-    nr_si = 1 if use_same_inputs else nr
     for (ds, dst, nn, b, nr) in data_set_info:
+        nr_si = 1 if use_same_inputs else nr
         datasets.append({
             'nn_data_set': ds,
             'nn_data': dst,
