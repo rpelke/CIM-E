@@ -44,7 +44,7 @@ def create_experiment(cfg: dict) -> ExpConfig:
         nn_data=cfg['nn_data'],
         batch=cfg['batch'],
         num_runs=cfg['num_runs'],
-        xbar_sizes=cfg['xbar_size'],
+        xbar_size=cfg['xbar_size'],
         digital_only=cfg['digital_only'],
         hrs_lrs=tuple(cfg['hrs_lrs']),
         adc_type=cfg['adc_type'],
@@ -57,7 +57,14 @@ def create_experiment(cfg: dict) -> ExpConfig:
         read_disturb=cfg.get('read_disturb'),
         V_read=cfg.get('V_read'),
         t_read=cfg.get('t_read'),
-        read_disturb_update_freq=cfg.get('read_disturb_update_freq'))
+        read_disturb_update_freq=cfg.get('read_disturb_update_freq'),
+        read_disturb_mitigation=cfg.get('read_disturb_mitigation'),
+        read_disturb_mitigation_fp=cfg.get('read_disturb_mitigation_fp'))
+
+    for key in cfg.keys():
+        if not hasattr(exp, key):
+            raise Exception(
+                f"Config parameter {key} not supported in ExpConfig.")
     return exp
 
 

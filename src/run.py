@@ -36,7 +36,9 @@ EMU_LIB_PATH = f"{repo_path}/build/release/lib/libacs_cb_emu.so"
 
 def _check_pathes():
     if not os.path.exists(ACS_CFG_DIR):
-        raise Exception(f"Cannot find ACS_CFG_DIR '{ACS_CFG_DIR}'")
+        raise Exception(
+            f"Cannot find ACS_CFG_DIR '{ACS_CFG_DIR}'. Please create the folder manually."
+        )
     if not os.path.exists(ACS_LIB_PATH):
         raise Exception(f"Cannot find ACS_LIB_PATH '{ACS_LIB_PATH}'")
     if not os.path.exists(EMU_LIB_PATH):
@@ -63,14 +65,15 @@ def iterate_experiments(exp: ExpConfig):
             'digital_only': exp.digital_only,
             'adc_type': exp.adc_type,
             'verbose': exp.verbose,
-            'read_disturb': exp.read_disturb
+            'read_disturb': exp.read_disturb,
+            'read_disturb_mitigation': exp.read_disturb_mitigation
         }.items() if value is not None
     }
     iterable_fields = {
         key: value
         for key, value in {
             'nn_name': exp.nn_names,
-            'xbar_size': exp.xbar_sizes,
+            'xbar_size': exp.xbar_size,
             'hrs_lrs': exp.hrs_lrs,
             'alpha': exp.alpha,
             'resolution': exp.resolution,
@@ -79,7 +82,8 @@ def iterate_experiments(exp: ExpConfig):
             'lrs_noise': exp.lrs_noise,
             'V_read': exp.V_read,
             't_read': exp.t_read,
-            'read_disturb_update_freq': exp.read_disturb_update_freq
+            'read_disturb_update_freq': exp.read_disturb_update_freq,
+            'read_disturb_mitigation_fp': exp.read_disturb_mitigation_fp
         }.items() if value is not None
     }
     iterable_fields = {k: v for k, v in iterable_fields.items() if v != None}
@@ -208,6 +212,7 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
         else:
             raise ValueError("m_mode not supported")
 
+    # Required parameters (not optional)
     acs_data = {
         "M": cfg['xbar_size'][0],
         "N": cfg['xbar_size'][0],
@@ -234,6 +239,11 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
         acs_data["t_read"] = cfg['t_read']
     if cfg.get('read_disturb_update_freq') != None:
         acs_data["read_disturb_update_freq"] = cfg['read_disturb_update_freq']
+    if cfg.get('read_disturb_mitigation') != None:
+        acs_data["read_disturb_mitigation"] = cfg['read_disturb_mitigation']
+    if cfg.get('read_disturb_mitigation_fp') != None:
+        acs_data["read_disturb_mitigation_fp"] = cfg[
+            'read_disturb_mitigation_fp']
 
     if cfg['m_mode'] in ['TNN_IV', 'TNN_V']:
         acs_data["SPLIT"] = [1, 1]
