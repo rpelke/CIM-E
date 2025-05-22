@@ -58,8 +58,10 @@ def create_experiment(cfg: dict) -> ExpConfig:
         V_read=cfg.get('V_read'),
         t_read=cfg.get('t_read'),
         read_disturb_update_freq=cfg.get('read_disturb_update_freq'),
-        read_disturb_mitigation=cfg.get('read_disturb_mitigation'),
-        read_disturb_mitigation_fp=cfg.get('read_disturb_mitigation_fp'))
+        read_disturb_mitigation_strategy=cfg.get(
+            'read_disturb_mitigation_strategy'),
+        read_disturb_mitigation_fp=cfg.get('read_disturb_mitigation_fp'),
+        read_disturb_update_tolerance=cfg.get('read_disturb_update_tolerance'))
 
     for key in cfg.keys():
         if not hasattr(exp, key):

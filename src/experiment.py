@@ -31,8 +31,9 @@ class ExpConfig:
     V_read: Optional[List[float]] = None
     t_read: Optional[List[float]] = None
     read_disturb_update_freq: Optional[int] = None
-    read_disturb_mitigation: Optional[bool] = None
+    read_disturb_mitigation_strategy: Optional[str] = None
     read_disturb_mitigation_fp: Optional[List[float]] = None
+    read_disturb_update_tolerance: Optional[List[float]] = None
 
     def __check_paramters(self):
         if self.nn_data_set not in ["cifar10", "cifar100"]:
@@ -97,15 +98,28 @@ class ExpConfig:
                         raise ValueError(
                             "read_disturb_update_freq should be greater than 0 (minimum: 1)"
                         )
-            if self.read_disturb_mitigation:
-                if self.read_disturb_mitigation_fp is None:
-                    raise ValueError(
-                        "read_disturb_mitigation_fp should be provided when read_disturb_mitigation is True"
-                    )
-                for fp in self.read_disturb_mitigation_fp:
-                    if fp < 1.0:
+            if self.read_disturb_mitigation_strategy is not None:
+                if self.read_disturb_mitigation_strategy == "SOFTWARE":
+                    if self.read_disturb_mitigation_fp is None:
                         raise ValueError(
-                            "read_disturb_mitigation_fp must be at least 1.0.")
+                            "read_disturb_mitigation_fp should be provided for SOFTWARE strategy"
+                        )
+                    else:
+                        for fp in self.read_disturb_mitigation_fp:
+                            if fp < 1.0:
+                                raise ValueError(
+                                    "read_disturb_mitigation_fp must be at least 1.0."
+                                )
+
+                elif self.read_disturb_mitigation_strategy == "HARDWARE":
+                    if self.read_disturb_update_tolerance is None:
+                        raise ValueError(
+                            "read_disturb_update_tolerance should be provided for HARDWARE strategy"
+                        )
+                elif self.read_disturb_mitigation_strategy != "OFF":
+                    raise ValueError(
+                        "read_disturb_mitigation_strategy should be either 'OFF', 'SOFTWARE', or 'HARDWARE'"
+                    )
 
     def __post_init__(self):
         type_hints = get_type_hints(self.__class__)
