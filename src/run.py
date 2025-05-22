@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 import ctypes
+import pickle
 import time
 import json
 import glob
@@ -23,7 +24,7 @@ import tvm
 import ast
 import os
 
-from experiment import ExpConfig
+from experiment import ExpConfig, SimulationStats
 from model_parser import get_model_name
 
 repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
@@ -352,7 +353,8 @@ def _run_single_experiment(
                                                           np.ndarray]],
     ideal_xbar: bool = False,
     use_same_inputs: bool = False
-) -> Tuple[dict, float, float, List[float], List[float], List[int]]:
+) -> Tuple[dict, float, float, List[float], List[float], List[int],
+           SimulationStats]:
     """Run a single experiment. This function is called from multiple processes.
     Args:
         c (dict): Experiment config
@@ -447,12 +449,21 @@ def _run_single_experiment(
     )
 
     if ideal_xbar:
+        stats = None
         del emu_lib
     else:
+        stats = SimulationStats(config=c,
+                                config_idx=c_idx,
+                                cycles_p=acs_int.cycles_p(),
+                                cycles_m=acs_int.cycles_m(),
+                                write_ops=acs_int.write_ops(),
+                                mvm_ops=acs_int.mvm_ops(),
+                                refresh_ops=acs_int.refresh_ops(),
+                                refresh_cell_ops=acs_int.refresh_cell_ops())
         del acs_int
         del acs_lib
 
-    return c, top1_perc, top5_perc, top1_batch, top5_batch, sim_time_batch_ns
+    return c, top1_perc, top5_perc, top1_batch, top5_batch, sim_time_batch_ns, stats
 
 
 def _run_single_experiment_wrapper(args):
@@ -512,7 +523,7 @@ def _get_baseline_accuracy(cfgs: List[dict],
         bl_res = pool.map(_run_single_experiment_wrapper, args_list)
 
     baseline_accuracies = []
-    for c, top1_baseline, top5_baseline, _, _, _ in bl_res:
+    for c, top1_baseline, top5_baseline, _, _, _, _ in bl_res:
         c.update({
             "top1_baseline": top1_baseline,
             "top5_baseline": top5_baseline
@@ -590,7 +601,7 @@ def run_experiments(exp: ExpConfig,
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)
 
-    for cfg, top1, top5, top1_batch, top5_batch, sim_time_batch_ns in res:
+    for cfg, top1, top5, top1_batch, top5_batch, sim_time_batch_ns, stats in res:
         top1_baseline, top5_baseline = _get_matching_baseline(
             cfg, baseline_accuracies)
         metrics = {
@@ -604,5 +615,10 @@ def run_experiments(exp: ExpConfig,
         }
         cfg.update(metrics)
         df = pd.concat([df, pd.DataFrame([cfg])], ignore_index=True)
+
+        # Save stats
+        with open(f"{result_path}/{exp_name}_stats_{stats.config_idx}.pkl",
+                  "wb") as f:
+            pickle.dump(stats, f)
 
     df.to_csv(f"{result_path}/{exp_name}.csv", index=False)

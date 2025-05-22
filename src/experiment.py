@@ -7,6 +7,7 @@
 ##############################################################################
 from typing import List, Tuple, Optional, Union, get_type_hints
 from dataclasses import dataclass
+import numpy as np
 
 
 @dataclass
@@ -134,3 +135,15 @@ class ExpConfig:
                     f"Argument '{field_name}' is missing in ExpConfig. Please provide all required arguments."
                 )
         self.__check_paramters()
+
+
+@dataclass
+class SimulationStats:
+    config: dict
+    config_idx: int
+    cycles_p: np.ndarray
+    cycles_m: np.ndarray
+    write_ops: int
+    mvm_ops: int
+    refresh_ops: int
+    refresh_cell_ops: int
