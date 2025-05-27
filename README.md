@@ -59,6 +59,12 @@ The following steps were tested with Python 3.10.12.
     ./scripts/benchmark.bash exp_name=adc_vgg7 n_jobs=8
     ```
 
+    Optional arguments:
+    ```bash
+    use_same_inputs=True # Use the same IFMs for each run
+    save_sim_stats=True # Save simulator stats after execution
+    ```
+
 1. Visualize the results:
 
     ```bash
@@ -77,24 +83,25 @@ The following steps were tested with Python 3.10.12.
 
 2. Specify all parameters to be used in the design space exploration. Every combination of parameters will be simulated. A tick in the `DSE list`column means that a list with several possible parameters can be created here. Otherwise, only a `Single Choice` is possible.
 
-    | Parameter      | Explanation                            | DSE<br>List | Single<br>Choice |
-    |----------------|----------------------------------------|:------:|:-----:|
-    | `nn_names`     | Names of the neural network architectures       |✅ |    |
-    | `ifm`          | Dimension of the input feature map              | ✅ |    | 
-    | `nn_data_set`  | Data set                                        |    | ✅ |
-    | `nn_data`      | Choise of dataset parts (test or train)         |    | ✅ |
-    | `batch`        | Batch size of input feature map                 |    | ✅ |
-    | `num_runs`     | Total number of images: `batch`*`num_runs`      |    | ✅ |
-    | `xbar_size`    | Dimensions of the offloaded matrix (MxN)        | ✅ |    |
-    | `digital_only` | True if mappings should use digital values only |    | ✅ |
-    | `hrs_lrs`      | HRS/LRS current (in uA) if `V_read is applied`  | ✅ |    | 
-    | `adc_type`     | Currently only supports `FP_ADC_ALPHA`          |    | ✅ |
-    | `alpha`        | Limitation of the ADC range in [0,1], 1 is 100% | ✅ |    | 
-    | `resolution`   | ADC resolution in bit                           | ✅ |    |
-    | `m_mode`       | Mapping mode (see next table)                   | ✅ |    | 
-    | `hrs_noise`    | Std. dev. of the gaussian noise (uA) around hrs | ✅ |    | 
-    | `lrs_noise`    | Std. dev. of the gaussian noise (uA) around lrs | ✅ |    | 
-    | `verbose`      | Enable verbose output of the simulator          | ✅ |    | 
+    | Parameter      | Explanation                            | DSE<br>List | Single<br>Choice | Optional<br>Parameter |
+    |----------------|----------------------------------------|:------:|:-----:|:-----:|
+    | `nn_names`     | Names of the neural network architectures       |✅ |    | no | 
+    | `ifm`          | Dimension of the input feature map              | ✅ |    | no |
+    | `nn_data_set`  | Data set                                        |    | ✅ | no |
+    | `nn_data`      | Choise of dataset parts (test or train)         |    | ✅ | no |
+    | `batch`        | Batch size of input feature map                 |    | ✅ | no |
+    | `num_runs`     | Total number of images: `batch`*`num_runs`      |    | ✅ | no |
+    | `xbar_size`    | Dimensions of the offloaded matrix (MxN)        | ✅ |    | no |
+    | `digital_only` | True if mappings should use digital values only |    | ✅ | no |
+    | `hrs_lrs`      | HRS/LRS current (in uA) if `V_read is applied`  | ✅ |    | yes |
+    | `gmin_gmax`    | Conductance values (in uS), needs `V_read`      | ✅ |    | yes | 
+    | `adc_type`     | Currently only supports `FP_ADC_ALPHA`          |    | ✅ | no |
+    | `alpha`        | Limitation of the ADC range in [0,1], 1 is 100% | ✅ |    | yes |
+    | `resolution`   | ADC resolution in bit                           | ✅ |    | yes |
+    | `m_mode`       | Mapping mode (see next table)                   | ✅ |    | no |
+    | `hrs_noise`    | Std. dev. of the gaussian noise (uA) around hrs | ✅ |    | no |
+    | `lrs_noise`    | Std. dev. of the gaussian noise (uA) around lrs | ✅ |    | no |
+    | `verbose`      | Enable verbose output of the simulator          | ✅ |    | no |
     
     A brief overview of the mapping modes is given in the tables below:
 
@@ -163,7 +170,8 @@ The following steps were tested with Python 3.10.12.
             "--config",
             "${workspaceFolder}/src/configs/test.json",
             "--n_jobs", "4",
-            "--use_same_inputs" // Optional: Use the same IFMs for each run
+            "--use_same_inputs"
+            "--save_sim_stats"
         ]
     }
     ```

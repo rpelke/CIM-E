@@ -28,13 +28,16 @@ if __name__ == "__main__":
     parser.add_argument('--use_same_inputs',
                         action='store_true',
                         help='Use the same IFMs if num_runs > 1')
-
+    parser.add_argument('--save_sim_stats',
+                        action='store_true',
+                        help='Save all simulation statistics to a file')
     args = parser.parse_args()
 
     print(f"Run experiment with config: {args.config}")
     print(f"Number of parallel jobs: {args.n_jobs}")
     print(f"Debug mode: {args.debug}")
     print(f"Use same inputs: {args.use_same_inputs}")
+    print(f"Save simulation statistics: {args.save_sim_stats}")
 
     with open(args.config, 'r') as json_file:
         cfg = json.load(json_file)
@@ -43,4 +46,4 @@ if __name__ == "__main__":
 
     exp = create_experiment(cfg)
     run_experiments(exp, exp_name, args.n_jobs, args.debug,
-                    args.use_same_inputs)
+                    args.use_same_inputs, args.save_sim_stats)

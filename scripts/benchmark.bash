@@ -40,6 +40,15 @@ for ARG in "$@"; do
             fi
             shift
             ;;
+        save_sim_stats=*)
+            VALUE="${ARG#*=}"
+            if [ "$VALUE" = "True" ]; then
+                SAVE_SIM_STATS="--save_sim_stats"
+            else
+                SAVE_SIM_STATS=""
+            fi
+            shift
+            ;;
         *)
             echo "Unknown argument: $ARG"
             exit 1
@@ -74,4 +83,4 @@ docker run -it --rm --memory=4g $DOCKER_FLAGS \
     -v ${PROJ_DIR}/src:/apps/src:Z \
     -v ${PROJ_DIR}/models:/apps/models:Z \
     -v ${PROJ_DIR}/results:/apps/results:Z \
-    cim-e $EXP_NAME $N_JOBS $USE_SAME_INPUTS
+    cim-e $EXP_NAME $N_JOBS $USE_SAME_INPUTS $SAVE_SIM_STATS

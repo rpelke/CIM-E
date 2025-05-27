@@ -85,6 +85,7 @@ def iterate_experiments(exp: ExpConfig):
             'nn_name': exp.nn_names,
             'xbar_size': exp.xbar_size,
             'hrs_lrs': exp.hrs_lrs,
+            'gmin_gmax': exp.gmin_gmax,
             'alpha': exp.alpha,
             'resolution': exp.resolution,
             'm_mode': exp.m_mode,
@@ -225,16 +226,28 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
 
     # Required parameters (not optional)
     acs_data = {
-        "M": cfg['xbar_size'][0],
-        "N": cfg['xbar_size'][0],
-        "digital_only": cfg['digital_only'],
-        "HRS": cfg['hrs_lrs'][0],
-        "LRS": cfg['hrs_lrs'][1],
-        "adc_type": adc_type,
-        "m_mode": cfg['m_mode'],
-        "HRS_NOISE": cfg['hrs_noise'],
-        "LRS_NOISE": cfg['lrs_noise'],
-        "verbose": cfg['verbose']
+        "M":
+        cfg['xbar_size'][0],
+        "N":
+        cfg['xbar_size'][0],
+        "digital_only":
+        cfg['digital_only'],
+        "HRS":
+        cfg['hrs_lrs'][0] if 'hrs_lrs' in cfg.keys() else cfg['gmin_gmax'][0] *
+        abs(cfg['V_read']),
+        "LRS":
+        cfg['hrs_lrs'][1] if 'hrs_lrs' in cfg.keys() else cfg['gmin_gmax'][0] *
+        abs(cfg['V_read']),
+        "adc_type":
+        adc_type,
+        "m_mode":
+        cfg['m_mode'],
+        "HRS_NOISE":
+        cfg['hrs_noise'],
+        "LRS_NOISE":
+        cfg['lrs_noise'],
+        "verbose":
+        cfg['verbose']
     }
 
     # Optional parameters
@@ -569,7 +582,8 @@ def run_experiments(exp: ExpConfig,
                     exp_name: str,
                     n_jobs: int,
                     dbg: bool = False,
-                    use_same_inputs: bool = False) -> None:
+                    use_same_inputs: bool = False,
+                    save_sim_stats: bool = False) -> None:
     _check_pathes()
     cfgs = iterate_experiments(exp)
 
@@ -617,8 +631,9 @@ def run_experiments(exp: ExpConfig,
         df = pd.concat([df, pd.DataFrame([cfg])], ignore_index=True)
 
         # Save stats
-        with open(f"{result_path}/{exp_name}_stats_{stats.config_idx}.pkl",
-                  "wb") as f:
-            pickle.dump(stats, f)
+        if save_sim_stats:
+            with open(f"{result_path}/{exp_name}_stats_{stats.config_idx}.pkl",
+                      "wb") as f:
+                pickle.dump(stats, f)
 
     df.to_csv(f"{result_path}/{exp_name}.csv", index=False)

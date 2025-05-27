@@ -20,7 +20,8 @@ class ExpConfig:
     num_runs: int
     xbar_size: List[Tuple[int, int]]
     digital_only: bool
-    hrs_lrs: List[Tuple[float]]
+    hrs_lrs: Optional[List[Tuple[float]]]
+    gmin_gmax: Optional[List[Tuple[float]]]
     adc_type: str
     hrs_noise: List[float]
     lrs_noise: List[float]
@@ -52,9 +53,24 @@ class ExpConfig:
         for (m, n) in self.xbar_size:
             if m <= 0 or n <= 0:
                 raise ValueError("xbar_size should be greater than 0")
-        for (hrs, lrs) in self.hrs_lrs:
-            if hrs < 0.0 or lrs <= 0.0 or hrs >= lrs:
-                raise ValueError("error in hrs_lrs should be greater than 0")
+
+        if self.hrs_lrs is not None:
+            for (hrs, lrs) in self.hrs_lrs:
+                if hrs < 0.0 or lrs <= 0.0 or hrs >= lrs:
+                    raise ValueError(
+                        "error in hrs_lrs should be greater than 0")
+        else:
+            if self.gmin_gmax is None:
+                raise ValueError(
+                    "Either hrs_lrs or gmin_gmax should be provided.")
+            else:
+                if self.V_read is None:
+                    raise ValueError(
+                        "V_read should be provided when gmin_gmax is used.")
+                for (gmin, gmax) in self.gmin_gmax:
+                    if gmin < 0.0 or gmax <= 0.0 or gmin >= gmax:
+                        raise ValueError(
+                            "Error in gmin_gmax: should be greater than 0")
 
         # Check ADC parameters
         if self.adc_type not in ["FP_ALPHA_ADC", "INF_ADC"]:
@@ -112,14 +128,14 @@ class ExpConfig:
                                     "read_disturb_mitigation_fp must be at least 1.0."
                                 )
 
-                elif self.read_disturb_mitigation_strategy == "HARDWARE":
+                elif self.read_disturb_mitigation_strategy == "CELL_BASED":
                     if self.read_disturb_update_tolerance is None:
                         raise ValueError(
-                            "read_disturb_update_tolerance should be provided for HARDWARE strategy"
+                            "read_disturb_update_tolerance should be provided for CELL_BASED strategy"
                         )
                 elif self.read_disturb_mitigation_strategy != "OFF":
                     raise ValueError(
-                        "read_disturb_mitigation_strategy should be either 'OFF', 'SOFTWARE', or 'HARDWARE'"
+                        "read_disturb_mitigation_strategy should be either 'OFF', 'SOFTWARE', or 'CELL_BASED'"
                     )
 
     def __post_init__(self):
