@@ -465,14 +465,26 @@ def _run_single_experiment(
         stats = None
         del emu_lib
     else:
-        stats = SimulationStats(config=c,
-                                config_idx=c_idx,
-                                cycles_p=acs_int.cycles_p(),
-                                cycles_m=acs_int.cycles_m(),
-                                write_ops=acs_int.write_ops(),
-                                mvm_ops=acs_int.mvm_ops(),
-                                refresh_ops=acs_int.refresh_ops(),
-                                refresh_cell_ops=acs_int.refresh_cell_ops())
+        if 'read_disturb' in c.keys():
+            stats = SimulationStats(
+                config=c,
+                config_idx=c_idx,
+                cycles_p=acs_int.cycles_p(),
+                cycles_m=acs_int.cycles_m(),
+                write_ops=acs_int.write_ops(),
+                mvm_ops=acs_int.mvm_ops(),
+                refresh_ops=acs_int.refresh_ops(),
+                refresh_cell_ops=acs_int.refresh_cell_ops())
+        else:
+            # If read disturb is not simulated, some parameters do not exist
+            stats = SimulationStats(config=c,
+                                    config_idx=c_idx,
+                                    cycles_p=None,
+                                    cycles_m=None,
+                                    write_ops=acs_int.write_ops(),
+                                    mvm_ops=acs_int.mvm_ops(),
+                                    refresh_ops=None,
+                                    refresh_cell_ops=None)
         del acs_int
         del acs_lib
 

@@ -17,8 +17,8 @@
         [256, 256]
     ],
     "digital_only": false,
-    "hrs_lrs": [
-        [5.0, 30.0]
+    "gmin_gmax": [
+        [5.0, 250.0]
     ],
     "adc_type": "INF_ADC",
     "m_mode": [
