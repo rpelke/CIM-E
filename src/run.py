@@ -236,7 +236,7 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
         cfg['hrs_lrs'][0] if 'hrs_lrs' in cfg.keys() else cfg['gmin_gmax'][0] *
         abs(cfg['V_read']),
         "LRS":
-        cfg['hrs_lrs'][1] if 'hrs_lrs' in cfg.keys() else cfg['gmin_gmax'][0] *
+        cfg['hrs_lrs'][1] if 'hrs_lrs' in cfg.keys() else cfg['gmin_gmax'][1] *
         abs(cfg['V_read']),
         "adc_type":
         adc_type,
