@@ -15,14 +15,14 @@ fi
 EXP_NAME="$1"
 N_JOBS="$2"
 
-if [ "$#" -ge 3 ]; then
-    USE_SAME_INPUTS="$3"
+if [ "$#" -gt 2 ]; then
+    OPTIONAL_ARGS="${@:3}"
 else
-    USE_SAME_INPUTS=""
+    OPTIONAL_ARGS=""
 fi
 
 source .venv/bin/activate
 python3 src/main.py \
     --config src/configs/$EXP_NAME.json \
     --n_jobs $N_JOBS \
-    $USE_SAME_INPUTS
+    $OPTIONAL_ARGS
