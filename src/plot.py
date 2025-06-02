@@ -4,6 +4,7 @@ import numpy as np
 import math
 import os
 import ast
+import pickle
 import argparse
 import json
 
@@ -503,6 +504,116 @@ def read_disturb_plot(df: pd.DataFrame, store_path: str, s_cat: list,
             plt.close()
 
 
+def read_disturb_mitigation_comparison(store_path: str, hw_path: str,
+                                       sw_path: str) -> None:
+
+    def _gen_df(path: str):
+        rows = []
+        for filename in os.listdir(path):
+            if filename.endswith('.pkl'):
+                full_path = os.path.join(path, filename)
+                with open(full_path, 'rb') as f:
+                    try:
+                        data = pickle.load(f)
+                        row = {}
+                        row.update(data.config)
+                        for attr in [
+                                'mvm_ops', 'refresh_cell_ops', 'refresh_ops',
+                                'write_ops'
+                        ]:
+                            row[attr] = getattr(data, attr, None)
+                        for attr in ['cycles_p', 'cycles_m']:
+                            row[f"{attr}_mean"] = getattr(data, attr,
+                                                          None).mean()
+                        rows.append(row)
+
+                    except Exception as e:
+                        print(f"Failed to load {filename}: {e}")
+        return pd.DataFrame(rows)
+
+    df_hw = _gen_df(hw_path)
+    df_sw = _gen_df(sw_path)
+
+    hw_cols = ['#A11035', '#B65256', '#CD8B87', '#E5C5C0', '#F5E8E5']
+    sw_cols = ['#00549F', '#407FB7', '#8EBAE5', '#C7DDF2', '#E8F1FA']
+    sw_markers = ['o', 's', 'D', '^', 'v']
+
+    for nn_name in list(df_hw['nn_name'].unique()):
+        df_hw_nn = df_hw[(df_hw['nn_name'] == nn_name)].sort_values(
+            by='t_read')
+        df_sw_nn = df_sw[(df_sw['nn_name'] == nn_name)].sort_values(
+            by='t_read')
+
+        for t in df_hw_nn['t_read'].unique():
+            df_hw_t = df_hw_nn[(df_hw_nn['t_read'] == t)].sort_values(
+                by='V_read', ascending=True)
+            df_sw_t = df_sw_nn[(df_sw_nn['t_read'] == t)].sort_values(
+                by='V_read', ascending=True)
+
+            v_read = np.sort(df_hw_t['V_read'].unique())
+            fig, axes = plt.subplots(
+                1, 3, figsize=(15, 3.5))  # Breiter für bessere Darstellung
+
+            axes[0].axhline(y=df_hw_t['top1_baseline']._values[0],
+                            color='black',
+                            linestyle='--',
+                            linewidth=2)
+
+            axes[0].plot(v_read,
+                         df_hw_t['top1']._values,
+                         label='HW',
+                         marker='x',
+                         color=hw_cols[0])
+            axes[1].plot(v_read,
+                         df_hw_t['refresh_cell_ops']._values,
+                         label='HW',
+                         marker='x',
+                         color=hw_cols[0])
+            axes[2].plot(v_read, (df_hw_t['cycles_p_mean'] +
+                                  df_hw_t['cycles_m_mean'])._values,
+                         label='HW',
+                         marker='x',
+                         color=hw_cols[0])
+
+            for fp_idx, fp in enumerate(
+                    df_sw_t['read_disturb_mitigation_fp'].unique()):
+                df_sw_fp = df_sw_t[(
+                    df_sw_t['read_disturb_mitigation_fp'] == fp)]
+                axes[0].plot(v_read,
+                             df_sw_fp['top1']._values,
+                             label=f'SW {fp}',
+                             marker=sw_markers[fp_idx],
+                             color=sw_cols[fp_idx])
+                axes[1].plot(v_read,
+                             df_sw_fp['refresh_cell_ops']._values,
+                             label=f'SW {fp}',
+                             marker=sw_markers[fp_idx],
+                             color=sw_cols[fp_idx])
+                axes[2].plot(v_read,
+                             (df_sw_fp['cycles_p_mean'] +
+                              df_sw_fp['cycles_m_mean'])._values,
+                             label=f'SW {fp}',
+                             marker=sw_markers[fp_idx],
+                             color=sw_cols[fp_idx])
+
+            axes[0].legend()
+
+            for ax in axes:
+                ax.tick_params(axis='x', labelsize=12)
+                ax.tick_params(axis='y', labelsize=12)
+                ax.set_xticks(v_read)
+                ax.set_xlabel(r'$V_{\mathrm{read}} (V)$', fontsize=12)
+
+            axes[0].set_ylabel('Top-1 Accuracy (%)', fontsize=12)
+            axes[1].set_ylabel('# Refreshed cells', fontsize=12)
+            axes[2].set_ylabel('# Prog. cycles per cell', fontsize=12)
+
+            plt.tight_layout()
+            plt.savefig(f"{store_path}/{nn_name}_tread{t}_comparison.png")
+            plt.savefig(f"{store_path}/{nn_name}_tread{t}_comparison.pdf")
+            plt.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
@@ -514,7 +625,6 @@ if __name__ == "__main__":
 
     with open(args.config, 'r') as json_file:
         cfg = json.load(json_file)
-
     exp_name = args.config.split('/')[-1].split('.json')[0]
     repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 
@@ -530,9 +640,22 @@ if __name__ == "__main__":
             )
             raise
         df_baseline = pd.read_csv(f"{baseline_path}/{exp_name}.csv")
+
     else:
         exp_result_path = repo_path + '/results/' + exp_name
         df = pd.read_csv(f"{exp_result_path}/{exp_name}.csv")
+
+    if exp_name == 'read_disturb_mitigation_hw':
+        hw_path = repo_path + '/results/read_disturb_mitigation_hw'
+        if not os.path.exists(hw_path):
+            raise Exception(
+                f"Hardware results for {exp_name} not found. Please run the hardware simulation first."
+            )
+        sw_path = repo_path + '/results/read_disturb_mitigation_sw'
+        if not os.path.exists(sw_path):
+            raise Exception(
+                f"Software results for {exp_name} not found. Please run the software simulation first."
+            )
 
     categories = df.columns
     cat_static = []  # Categories (columns) that all experiments have in common
@@ -587,5 +710,9 @@ if __name__ == "__main__":
                           store_path=store_path,
                           s_cat=cat_static,
                           d_cat=cat_dynamic)
+    elif exp_name == 'read_disturb_mitigation_hw':
+        read_disturb_mitigation_comparison(store_path=store_path,
+                                           hw_path=hw_path,
+                                           sw_path=sw_path)
     else:
         raise Exception(f"Plot for experiment {exp_name} not implemented.")
