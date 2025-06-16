@@ -284,28 +284,32 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
 
 
 def _check_prev_results(cfg: dict, result_path: str,
-                        exp_name: str) -> Tuple[dict, pd.DataFrame]:
+                        exp_name: str) -> Tuple[dict, pd.DataFrame, int]:
     """Excludes experiments that have already been carried out.
     Args:
         cfg (dict): Experiment configuration
         exp_name (str): Name of the experiment
     Returns:
         dict: Reduced configuration with only 'new' simulations
+        pd.DataFrame: DataFrame including previous results
+        int: Offset for the config index in case of previous configs
     """
     if not os.path.exists(result_path):
         # Don't create this here because of docker --user permissions
         raise Exception(f"Please create folder '{result_path}' first.")
 
     if not os.path.exists(f"{result_path}/{exp_name}.csv"):
+        c_idx_offset = 0
         os.makedirs(result_path, exist_ok=True)
         assert len(cfg) > 0, "Empty configuration file."
         accuracy_results = ["top1", "top5", "top1_baseline", "top5_baseline"]
         df_columns = list(cfg[0].keys()) + accuracy_results
         df = pd.DataFrame(columns=df_columns)
-        return cfg, df
+        return cfg, df, c_idx_offset
 
     else:
         df = pd.read_csv(f"{result_path}/{exp_name}.csv")
+        c_idx_offset = len(df)
         assert len(cfg) > 0, "Empty configuration file."
         cfg_cols = cfg[0].keys()
         df_to_check = df[cfg_cols]
@@ -328,7 +332,7 @@ def _check_prev_results(cfg: dict, result_path: str,
         print(
             f"---{del_count} simulations removed (already executed previously)---"
         )
-        return cfg, df
+        return cfg, df, c_idx_offset
 
 
 def _load_xbar_simulator_lib(c: dict):
@@ -365,7 +369,8 @@ def _run_single_experiment(
     data: Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray,
                                                           np.ndarray]],
     ideal_xbar: bool = False,
-    use_same_inputs: bool = False
+    use_same_inputs: bool = False,
+    c_idx_offset: int = 0
 ) -> Tuple[dict, float, float, List[float], List[float], List[int],
            SimulationStats]:
     """Run a single experiment. This function is called from multiple processes.
@@ -376,6 +381,7 @@ def _run_single_experiment(
         data (Tuple[int, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]): IFM/OFM data
         ideal_xbar (bool, optional): Switch off any non-idealities (if true). Defaults to False.
         use_same_inputs (bool, optional): Use the same inputs for all runs. Defaults to False.
+        c_idx_offset (int, optional): Offset for the config index in case of previous configs. Defaults to 0.
     Returns:
         Tuple[dict, float, float]: cfg c, top 1% accuracy, top 5% accuracy
     """
@@ -468,7 +474,7 @@ def _run_single_experiment(
         if 'read_disturb' in c.keys():
             stats = SimulationStats(
                 config=c,
-                config_idx=c_idx,
+                config_idx=c_idx + c_idx_offset,
                 cycles_p=acs_int.cycles_p(),
                 cycles_m=acs_int.cycles_m(),
                 write_ops=acs_int.write_ops(),
@@ -478,7 +484,7 @@ def _run_single_experiment(
         else:
             # If read disturb is not simulated, some parameters do not exist
             stats = SimulationStats(config=c,
-                                    config_idx=c_idx,
+                                    config_idx=c_idx + c_idx_offset,
                                     cycles_p=None,
                                     cycles_m=None,
                                     write_ops=acs_int.write_ops(),
@@ -600,7 +606,7 @@ def run_experiments(exp: ExpConfig,
     cfgs = iterate_experiments(exp)
 
     result_path = f"{repo_path}/results/{exp_name}"
-    cfgs, df = _check_prev_results(cfgs, result_path, exp_name)
+    cfgs, df, c_idx_offset = _check_prev_results(cfgs, result_path, exp_name)
 
     print(
         f"---Execute experiment '{exp_name}': {len(cfgs)} simulations pending---"
@@ -619,10 +625,11 @@ def run_experiments(exp: ExpConfig,
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs),
                                        _get_matching_dataset(c, datasets),
-                                       False, use_same_inputs))
+                                       False, use_same_inputs, c_idx_offset))
     else:
         args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets),
-                      False, use_same_inputs) for c_idx, c in enumerate(cfgs)]
+                      False, use_same_inputs, c_idx_offset)
+                     for c_idx, c in enumerate(cfgs)]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)
