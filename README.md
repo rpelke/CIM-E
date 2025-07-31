@@ -1,6 +1,7 @@
 # <u>CIM</u>-<u>E</u>xplorer
 [![Style](https://github.com/rpelke/CIM-E/actions/workflows/style.yml/badge.svg)](https://github.com/rpelke/CIM-E/actions/workflows/style.yml)
-[![Build Check](https://github.com/rpelke/CIM-E/actions/workflows/build.yml/badge.svg)](https://github.com/rpelke/CIM-E/actions/workflows/build.yml)
+[![Simulator Check](https://github.com/rpelke/CIM-E/actions/workflows/build_simulator.yml/badge.svg)](https://github.com/rpelke/CIM-E/actions/workflows/build_simulator.yml)
+[![Docker Image Check](https://github.com/rpelke/CIM-E/actions/workflows/test_docker_image.yml/badge.svg)](https://github.com/rpelke/CIM-E/actions/workflows/test_docker_image.yml)
 
 CIM-E optimizes BNN and TNN inference for RRAM crossbars.
 It uses the mappings and the crossbar simulator from [analog-cim-sim](https://github.com/rpelke/analog-cim-sim).
@@ -40,11 +41,9 @@ The following steps were tested with Python 3.10.12.
 1. Download the docker image or build the image from scratch:
 
     ```bash
+    # Pull image
     docker pull docker.io/pelke/cim-e:latest
-    ```
-
-    Or
-    ```bash
+    # Build image from scratch
     docker build -f docker/build_simulator.dockerfile -t cim-e .
     ```
 
