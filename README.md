@@ -37,11 +37,17 @@ The following steps were tested with Python 3.10.12.
     ./models/download_models.bash
     ```
 
-1. Build the simulator in docker (recommended):
+1. Download the docker image or build the image from scratch:
 
     ```bash
-    docker build -f build_simulator.dockerfile -t cim-e .
+    docker pull docker.io/pelke/cim-e:latest
     ```
+
+    Or
+    ```bash
+    docker build -f docker/build_simulator.dockerfile -t cim-e .
+    ```
+
     This project is designed to run rootless, so you can also use `podman`.
     Make sure `podman-docker` is installed or create an alias for docker that points to podman.
 

@@ -22,13 +22,13 @@ RUN apt-get install -y --no-install-recommends \
 RUN python3 -m venv /apps/.venv
 
 # Install simulator
-COPY analog-cim-sim /apps/analog-cim-sim
-COPY scripts /apps/scripts
+COPY ../analog-cim-sim /apps/analog-cim-sim
+COPY ../scripts /apps/scripts
 RUN . /apps/.venv/bin/activate && pip3 install -r /apps/analog-cim-sim/requirements.txt
 RUN . /apps/.venv/bin/activate && /apps/scripts/build_simulator.bash
 
 # Install TVM runtime
-COPY requirements.txt /apps/requirements.txt 
+COPY ../requirements.txt /apps/requirements.txt
 RUN . /apps/.venv/bin/activate && pip3 install -r /apps/requirements.txt
 
 WORKDIR /apps
@@ -37,6 +37,6 @@ WORKDIR /apps
 RUN mkdir /apps/home && chmod 777 /apps/home && chmod 777 /apps
 ENV HOME=/apps/home
 
-COPY scripts/entrypoint.bash /apps/entrypoint.bash
+COPY ../scripts/entrypoint.bash /apps/entrypoint.bash
 RUN chmod 777 /apps/entrypoint.bash
 ENTRYPOINT ["/apps/entrypoint.bash"]
