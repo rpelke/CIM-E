@@ -30,23 +30,26 @@ from model_parser import get_model_name
 repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 python_version = '.'.join(sys.version.split('.', 2)[:2])
 
-ACS_CFG_DIR = f"{repo_path}/src/acs_configs"
-ACS_LIB_PATH = f"{repo_path}/.venv/lib/python{python_version}/site-packages"
-EMU_LIB_PATH = f"{repo_path}/build/release/lib/libacs_cb_emu.so"
 
-
-def _check_pathes():
-    if not os.path.exists(ACS_CFG_DIR):
+def _check_pathes(acs_lib_path: str, emu_lib_path: str,
+                  acs_cfg_dir: str) -> None:
+    if not os.path.exists(acs_cfg_dir):
         raise Exception(
-            f"Cannot find ACS_CFG_DIR '{ACS_CFG_DIR}'. Please create the folder manually."
+            f"Cannot find ACS_CFG_DIR '{acs_cfg_dir}'. Please create the folder manually."
         )
-    if not os.path.exists(ACS_LIB_PATH):
-        raise Exception(f"Cannot find ACS_LIB_PATH '{ACS_LIB_PATH}'")
-    if not os.path.exists(EMU_LIB_PATH):
-        raise Exception(f"Cannot find EMU_LIB_PATH '{EMU_LIB_PATH}'")
+    global ACS_CFG_DIR
+    ACS_CFG_DIR = acs_cfg_dir
+    if not os.path.exists(acs_lib_path):
+        raise Exception(f"Cannot find ACS_LIB_PATH '{acs_lib_path}'")
+    global ACS_LIB_PATH
+    ACS_LIB_PATH = acs_lib_path
+    if not os.path.exists(emu_lib_path):
+        raise Exception(f"Cannot find EMU_LIB_PATH '{emu_lib_path}'")
+    global EMU_LIB_PATH
+    EMU_LIB_PATH = emu_lib_path
 
     # Delete old configs
-    json_files = glob.glob(os.path.join(ACS_CFG_DIR, "*.json"))
+    json_files = glob.glob(os.path.join(acs_cfg_dir, "*.json"))
     for file in json_files:
         try:
             os.remove(file)
@@ -601,8 +604,11 @@ def run_experiments(exp: ExpConfig,
                     n_jobs: int,
                     dbg: bool = False,
                     use_same_inputs: bool = False,
-                    save_sim_stats: bool = False) -> None:
-    _check_pathes()
+                    save_sim_stats: bool = False,
+                    acs_lib_path: str = None,
+                    emu_lib_path: str = None,
+                    acs_cfg_dir: str = None) -> None:
+    _check_pathes(acs_lib_path, emu_lib_path, acs_cfg_dir)
     cfgs = iterate_experiments(exp)
 
     result_path = f"{repo_path}/results/{exp_name}"

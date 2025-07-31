@@ -1,0 +1,35 @@
+name: Test
+
+on:
+  push:
+    branches: [main, dev*]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-check:
+    runs-on: ubuntu-22.04
+
+    container:
+      image: docker.io/pelke/cim-e:latest
+      options: --workdir /github/workspace
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      - name: Mark repository as safe for Git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Set up and build
+        run: |
+          . /apps/.venv/bin/activate
+          mkdir -p src/acs_configs
+          mkdir -p results/test
+          ./models/download_models.bash
+          python3 src/main.py \
+            --config src/configs/test.json \
+            --acs_lib_path $(python3 -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])') \
+            --emu_lib_path /apps/build/release/lib/libacs_cb_emu.so

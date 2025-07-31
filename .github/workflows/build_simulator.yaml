@@ -1,4 +1,4 @@
-name: Check Build
+name: Build Simulator 
 
 on:
   push:
