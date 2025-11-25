@@ -9,16 +9,17 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ="Europe/Berlin"
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
     build-essential \
     git \
     cmake \
     gcc \
+    gdb \
     python3-dev \
     python3-pip \
-    python3-venv \
-    curl
+    python3-venv
 
 RUN python3 -m venv /apps/.venv
 
