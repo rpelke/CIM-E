@@ -9,7 +9,7 @@
 
 # Get directory of script
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do 
+while [ -h "$SOURCE" ]; do
     DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
     SOURCE="$(readlink "$SOURCE")"
     [[ $SOURCE != /* ]] && SOURCE="${DIR}/$SOURCE"
@@ -20,6 +20,10 @@ PROJ_DIR=${DIR}/..
 # Default parameters
 N_JOBS=4
 EXP_NAME=""
+
+# Set this environment variable to use docker or podman (default: docker)
+CONTAINER_ENGINE="${CONTAINER_ENGINE:-docker}"
+echo "Using container engine: $CONTAINER_ENGINE"
 
 for ARG in "$@"; do
     case $ARG in
@@ -60,26 +64,25 @@ done
 if [ -z "$EXP_NAME" ]; then
     echo "Error: exp_name is required. Usage: exp_name=<name>"
     exit 1
-else 
+else
     mkdir -p $PROJ_DIR/results/$EXP_NAME
     mkdir -p $PROJ_DIR/src/acs_configs
 fi
 
-DOCKER_FLAGS=""
 
-if [[ "$(docker --version)" == *"podman"* ]]; then
-    echo "Using podman"
+CONTAINER_FLAGS=""
+
+if [[ "$CONTAINER_ENGINE" == "podman" ]]; then
     if podman run --help | grep -q -- "--userns=keep-id"; then
-        DOCKER_FLAGS="--userns=keep-id"
+        CONTAINER_FLAGS="--userns=keep-id"
     else
-        DOCKER_FLAGS="--userns=host"
+        CONTAINER_FLAGS="--userns=host"
     fi
 else
-    echo "Using docker"
-    DOCKER_FLAGS="--user $(id -u):$(id -g)"
+    CONTAINER_FLAGS="--user $(id -u):$(id -g)"
 fi
 
-docker run -it --rm --memory=4g $DOCKER_FLAGS \
+$CONTAINER_ENGINE run -it --rm --memory=4g $CONTAINER_FLAGS \
     -v ${PROJ_DIR}/src:/apps/src:Z \
     -v ${PROJ_DIR}/models:/apps/models:Z \
     -v ${PROJ_DIR}/results:/apps/results:Z \

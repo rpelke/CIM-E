@@ -53,8 +53,12 @@ The following steps were tested with `Python3.10` and `Python3.11`.
 
 
 ## Run Simulations
+The benchmarks can be executed with either docker or podman.
+The default is docker.
 
-1. Execute the benchmarks with docker:
+If you want to use podman, please execute `export CONTAINER_ENGINE=podman` before staring the scripts below.
+
+1. Execute the benchmarks inside the container:
 
     The name of the test is the input argument.
     ```bash
