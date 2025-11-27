@@ -20,7 +20,8 @@ RUN apt-get update && \
     python3-dev \
     python3-pip \
     python3-venv \
-    curl
+    curl \
+    libtbb-dev
 
 RUN python3 -m venv /apps/.venv
 

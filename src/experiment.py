@@ -36,6 +36,8 @@ class ExpConfig:
     read_disturb_mitigation_strategy: Optional[str] = None
     read_disturb_mitigation_fp: Optional[List[float]] = None
     read_disturb_update_tolerance: Optional[List[float]] = None
+    parasitics: Optional[bool] = None
+    w_res: Optional[List[float]] = None
 
     def __check_paramters(self):
         if self.nn_data_set not in ["cifar10", "cifar100"]:
@@ -137,6 +139,22 @@ class ExpConfig:
                     raise ValueError(
                         "read_disturb_mitigation_strategy should be either 'OFF', 'SOFTWARE', or 'CELL_BASED'"
                     )
+
+        # Check parasitics parameters
+        if (self.parasitics):
+            if self.w_res is None:
+                raise ValueError(
+                    "w_res should be provided when parasitics is True.")
+            for res in self.w_res:
+                if res < 0.0:
+                    raise ValueError("w_res should be non-negative.")
+            if self.V_read is None:
+                raise ValueError(
+                    "V_read should be provided when parasitics is True.")
+            for v in self.V_read:
+                if v >= 0.0:
+                    raise ValueError(
+                        "Parasitics model requires negative V_read values")
 
     def __post_init__(self):
         type_hints = get_type_hints(self.__class__)

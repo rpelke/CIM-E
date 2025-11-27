@@ -62,24 +62,17 @@ def iterate_experiments(exp: ExpConfig):
     static_fields = {
         key: value
         for key, value in {
-            'nn_data_set':
-            exp.nn_data_set,
-            'nn_data':
-            exp.nn_data,
-            'batch':
-            exp.batch,
-            'num_runs':
-            exp.num_runs,
-            'digital_only':
-            exp.digital_only,
-            'adc_type':
-            exp.adc_type,
-            'verbose':
-            exp.verbose,
-            'read_disturb':
-            exp.read_disturb,
+            'nn_data_set': exp.nn_data_set,
+            'nn_data': exp.nn_data,
+            'batch': exp.batch,
+            'num_runs': exp.num_runs,
+            'digital_only': exp.digital_only,
+            'adc_type': exp.adc_type,
+            'verbose': exp.verbose,
+            'read_disturb': exp.read_disturb,
             'read_disturb_mitigation_strategy':
-            exp.read_disturb_mitigation_strategy
+            exp.read_disturb_mitigation_strategy,
+            'parasitics': exp.parasitics
         }.items() if value is not None
     }
     iterable_fields = {
@@ -98,7 +91,8 @@ def iterate_experiments(exp: ExpConfig):
             't_read': exp.t_read,
             'read_disturb_update_freq': exp.read_disturb_update_freq,
             'read_disturb_mitigation_fp': exp.read_disturb_mitigation_fp,
-            'read_disturb_update_tolerance': exp.read_disturb_update_tolerance
+            'read_disturb_update_tolerance': exp.read_disturb_update_tolerance,
+            'w_res': exp.w_res
         }.items() if value is not None
     }
     iterable_fields = {k: v for k, v in iterable_fields.items() if v != None}
@@ -275,6 +269,10 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     if cfg.get('read_disturb_update_tolerance') != None:
         acs_data["read_disturb_update_tolerance"] = cfg[
             'read_disturb_update_tolerance']
+    if cfg.get('parasitics') != None:
+        acs_data["parasitics"] = cfg['parasitics']
+    if cfg.get('w_res') != None:
+        acs_data["w_res"] = cfg['w_res']
 
     if cfg['m_mode'] in ['TNN_IV', 'TNN_V']:
         acs_data["SPLIT"] = [1, 1]

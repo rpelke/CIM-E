@@ -62,7 +62,9 @@ def create_experiment(cfg: dict) -> ExpConfig:
         read_disturb_mitigation_strategy=cfg.get(
             'read_disturb_mitigation_strategy'),
         read_disturb_mitigation_fp=cfg.get('read_disturb_mitigation_fp'),
-        read_disturb_update_tolerance=cfg.get('read_disturb_update_tolerance'))
+        read_disturb_update_tolerance=cfg.get('read_disturb_update_tolerance'),
+        parasitics=cfg.get('parasitics'),
+        w_res=cfg.get('w_res'))
 
     for key in cfg.keys():
         if not hasattr(exp, key):
