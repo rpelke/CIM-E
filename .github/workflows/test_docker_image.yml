@@ -33,3 +33,12 @@ jobs:
             --config src/configs/test.json \
             --acs_lib_path $(python3 -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])') \
             --emu_lib_path /apps/build/release/lib/libacs_cb_emu.so
+      
+      - name: Check all configurations
+        run: |
+          . /apps/.venv/bin/activate
+          for cfg in src/configs/*.json; do
+            name="${cfg%.json}"
+            mkdir -p "results/$name"
+            python3 src/main.py --check_config_only --config "$cfg"
+          done

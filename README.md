@@ -159,10 +159,23 @@ If you want to use podman, please execute `export CONTAINER_ENGINE=podman` befor
 - Test the simulator `analog-cim-sim` manually in docker:
 
     ```bash
-    docker run -it --rm --entrypoint "/bin/bash" cim-e
+    docker run -it --rm --entrypoint "/bin/bash" \
+        -v "$PWD/src:/apps/src" \
+        -v "$PWD/models:/apps/models" \
+        -v "$PWD/results:/apps/results" \
+        cim-e
     source .venv/bin/activate
     python3 -m unittest discover -s analog-cim-sim/int-bindings/test -p '*_test.py'
     deactivate && exit
+    ```
+
+    In case you are using podman, change the first command to:
+    ```bash
+    podman run -it --rm --entrypoint "/bin/bash" \
+        -v "$PWD/src:/apps/src:Z" \
+        -v "$PWD/models:/apps/models:Z" \
+        -v "$PWD/results:/apps/results:Z" \
+        cim-e
     ```
 
 - Debug Python code in VSCode:
