@@ -53,7 +53,6 @@ def create_experiment(cfg: dict) -> ExpConfig:
         hrs_noise=cfg['hrs_noise'],
         lrs_noise=cfg['lrs_noise'],
         verbose=cfg['verbose'],
-        alpha=cfg.get('alpha'),
         resolution=cfg.get('resolution'),
         read_disturb=cfg.get('read_disturb'),
         V_read=cfg.get('V_read'),
