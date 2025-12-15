@@ -44,6 +44,10 @@ if __name__ == "__main__":
         type=str,
         help='Path to the libacs_cb_emu.so library',
         default=f"{repo_path}/build/release/lib/libacs_cb_emu.so")
+    parser.add_argument(
+        '--check_config_only',
+        action='store_true',
+        help='Only check the config file and do not run the experiment')
     parser.add_argument('--acs_cfg_dir',
                         type=str,
                         help='Path to the ACS config directory',
@@ -58,6 +62,7 @@ if __name__ == "__main__":
     print(f"ACS library path: {args.acs_lib_path}")
     print(f"EMU library path: {args.emu_lib_path}")
     print(f"ACS config directory: {args.acs_cfg_dir}")
+    print(f"Check config only: {args.check_config_only}")
 
     with open(args.config, 'r') as json_file:
         cfg = json.load(json_file)
@@ -65,6 +70,9 @@ if __name__ == "__main__":
     exp_name = args.config.split('/')[-1].split('.json')[0]
 
     exp = create_experiment(cfg)
-    run_experiments(exp, exp_name, args.n_jobs, args.debug,
-                    args.use_same_inputs, args.save_sim_stats,
-                    args.acs_lib_path, args.emu_lib_path, args.acs_cfg_dir)
+    print(f"Valid configuration: {exp_name}")
+
+    if not args.check_config_only:
+        run_experiments(exp, exp_name, args.n_jobs, args.debug,
+                        args.use_same_inputs, args.save_sim_stats,
+                        args.acs_lib_path, args.emu_lib_path, args.acs_cfg_dir)
