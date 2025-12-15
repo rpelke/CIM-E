@@ -27,7 +27,6 @@ class ExpConfig:
     lrs_noise: List[float]
     verbose: bool
     m_mode: List[str]
-    alpha: Optional[List[float]] = None
     resolution: Optional[List[int]] = None
     read_disturb: Optional[bool] = None
     V_read: Optional[List[float]] = None
@@ -78,9 +77,7 @@ class ExpConfig:
         if self.adc_type not in ["FP_ALPHA_ADC", "INF_ADC"]:
             raise ValueError("adc_type not valid.")
         if self.adc_type != "INF_ADC":
-            for a in self.alpha:
-                if a <= 0.0:
-                    raise ValueError("alpha should be greater than 0")
+            # TODO: Add calibration params
             for r in self.resolution:
                 if r != -1 and r <= 0:
                     raise ValueError("resolution should be greater than 0")

@@ -107,7 +107,6 @@ If you want to use podman, please execute `export CONTAINER_ENGINE=podman` befor
     | `hrs_lrs`      | HRS/LRS current (in uA) if `V_read is applied`  | ✅ |    | yes |
     | `gmin_gmax`    | Conductance values (in uS), needs `V_read`      | ✅ |    | yes |
     | `adc_type`     | Currently only supports `FP_ADC_ALPHA`          |    | ✅ | no |
-    | `alpha`        | Limitation of the ADC range in [0,1], 1 is 100% | ✅ |    | yes |
     | `resolution`   | ADC resolution in bit                           | ✅ |    | yes |
     | `m_mode`       | Mapping mode (see next table)                   | ✅ |    | no |
     | `hrs_noise`    | Std. dev. of the gaussian noise (uA) around hrs | ✅ |    | no |

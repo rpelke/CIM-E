@@ -82,7 +82,6 @@ def iterate_experiments(exp: ExpConfig):
             'xbar_size': exp.xbar_size,
             'hrs_lrs': exp.hrs_lrs,
             'gmin_gmax': exp.gmin_gmax,
-            'alpha': exp.alpha,
             'resolution': exp.resolution,
             'm_mode': exp.m_mode,
             'hrs_noise': exp.hrs_noise,
@@ -248,8 +247,6 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     }
 
     # Optional parameters
-    if cfg.get('alpha') != None:
-        acs_data["alpha"] = cfg['alpha']
     if cfg.get('resolution') != None:
         acs_data["resolution"] = cfg['resolution']
     if cfg.get('read_disturb') != None:

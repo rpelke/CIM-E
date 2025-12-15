@@ -19,7 +19,6 @@
         [5.0, 50.0]
     ],
     "adc_type": "FP_ALPHA_ADC",
-    "alpha": [1.0],
     "resolution": [20],
     "m_mode": ["BNN_I", "BNN_II"],
     "hrs_noise": [0.0],
