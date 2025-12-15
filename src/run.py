@@ -226,7 +226,7 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
         "M":
         cfg['xbar_size'][0],
         "N":
-        cfg['xbar_size'][0],
+        cfg['xbar_size'][1],
         "digital_only":
         cfg['digital_only'],
         "HRS":
