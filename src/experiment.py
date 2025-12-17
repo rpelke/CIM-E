@@ -28,6 +28,7 @@ class ExpConfig:
     verbose: bool
     m_mode: List[str]
     resolution: Optional[List[int]] = None
+    adc_profile: Optional[bool] = None
     read_disturb: Optional[bool] = None
     V_read: Optional[List[float]] = None
     t_read: Optional[List[float]] = None

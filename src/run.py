@@ -68,6 +68,7 @@ def iterate_experiments(exp: ExpConfig):
             'num_runs': exp.num_runs,
             'digital_only': exp.digital_only,
             'adc_type': exp.adc_type,
+            'adc_profile': exp.adc_profile,
             'verbose': exp.verbose,
             'read_disturb': exp.read_disturb,
             'read_disturb_mitigation_strategy':
@@ -249,6 +250,8 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     # Optional parameters
     if cfg.get('resolution') != None:
         acs_data["resolution"] = cfg['resolution']
+    if cfg.get('adc_profile') != None:
+        acs_data["adc_profile"] = cfg['adc_profile']
     if cfg.get('read_disturb') != None:
         acs_data["read_disturb"] = cfg['read_disturb']
     if cfg.get('V_read') != None:
@@ -368,7 +371,8 @@ def _run_single_experiment(
                                                           np.ndarray]],
     ideal_xbar: bool = False,
     use_same_inputs: bool = False,
-    c_idx_offset: int = 0
+    c_idx_offset: int = 0,
+    result_path: str = ""
 ) -> Tuple[dict, float, float, List[float], List[float], List[int],
            SimulationStats]:
     """Run a single experiment. This function is called from multiple processes.
@@ -380,6 +384,7 @@ def _run_single_experiment(
         ideal_xbar (bool, optional): Switch off any non-idealities (if true). Defaults to False.
         use_same_inputs (bool, optional): Use the same inputs for all runs. Defaults to False.
         c_idx_offset (int, optional): Offset for the config index in case of previous configs. Defaults to 0.
+        result_path (str): Path to experiment result directory.
     Returns:
         Tuple[dict, float, float]: cfg c, top 1% accuracy, top 5% accuracy
     """
@@ -489,6 +494,11 @@ def _run_single_experiment(
                                     mvm_ops=acs_int.mvm_ops(),
                                     refresh_ops=None,
                                     refresh_cell_ops=None)
+
+        if c.get("adc_profile"):
+            adc_profile_filename = f"{result_path}/adc_prof_{c_idx}.json"
+            acs_int.dump_adc_profile(adc_profile_filename)
+
         del acs_int
         del acs_lib
 
@@ -626,10 +636,10 @@ def run_experiments(exp: ExpConfig,
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs),
                                        _get_matching_dataset(c, datasets),
-                                       False, use_same_inputs, c_idx_offset))
+                                       False, use_same_inputs, c_idx_offset, result_path))
     else:
         args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets),
-                      False, use_same_inputs, c_idx_offset)
+                      False, use_same_inputs, c_idx_offset, result_path)
                      for c_idx, c in enumerate(cfgs)]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:

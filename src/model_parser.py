@@ -54,6 +54,7 @@ def create_experiment(cfg: dict) -> ExpConfig:
         lrs_noise=cfg['lrs_noise'],
         verbose=cfg['verbose'],
         resolution=cfg.get('resolution'),
+        adc_profile=cfg.get('adc_profile'),
         read_disturb=cfg.get('read_disturb'),
         V_read=cfg.get('V_read'),
         t_read=cfg.get('t_read'),
