@@ -336,7 +336,7 @@ def _check_prev_results(cfg: dict, result_path: str,
         return cfg, df, c_idx_offset
 
 
-def _load_xbar_simulator_lib(c: dict):
+def _load_xbar_simulator_lib(c: dict, n_sim_threads: int):
     # Execute dlopen to make symbols visible for the compiled executable
     files = glob.glob(os.path.join(ACS_LIB_PATH, 'acs_int.cpython*'))
     assert len(files) == 1
@@ -352,7 +352,7 @@ def _load_xbar_simulator_lib(c: dict):
     # Set acs config
     fd, tmp_name = tempfile.mkstemp(dir=ACS_CFG_DIR, suffix=".json")
     _ = _gen_acs_cfg_data(c, tmp_name)
-    acs_int.set_config(os.path.abspath(tmp_name))
+    acs_int.set_config(os.path.abspath(tmp_name), n_sim_threads)
     os.close(fd)
 
     return acs_int, acs_lib
@@ -372,7 +372,8 @@ def _run_single_experiment(
     ideal_xbar: bool = False,
     use_same_inputs: bool = False,
     c_idx_offset: int = 0,
-    result_path: str = ""
+    result_path: str = "",
+    n_sim_threads: int = 1
 ) -> Tuple[dict, float, float, List[float], List[float], List[int],
            SimulationStats]:
     """Run a single experiment. This function is called from multiple processes.
@@ -385,6 +386,7 @@ def _run_single_experiment(
         use_same_inputs (bool, optional): Use the same inputs for all runs. Defaults to False.
         c_idx_offset (int, optional): Offset for the config index in case of previous configs. Defaults to 0.
         result_path (str): Path to experiment result directory.
+        n_sim_threads (int): Number of threads spawnable by the simulator.
     Returns:
         Tuple[dict, float, float]: cfg c, top 1% accuracy, top 5% accuracy
     """
@@ -393,7 +395,7 @@ def _run_single_experiment(
         emu_lib = _load_emulator_lib()
     else:
         print(f"Start Accuracy Simulation ({c_idx + 1}/{num_c})")
-        acs_int, acs_lib = _load_xbar_simulator_lib(c)
+        acs_int, acs_lib = _load_xbar_simulator_lib(c, n_sim_threads)
 
     n_classes, (train_images, train_labels), (test_images, test_labels) = data
 
@@ -496,7 +498,7 @@ def _run_single_experiment(
                                     refresh_cell_ops=None)
 
         if c.get("adc_profile"):
-            adc_profile_filename = f"{result_path}/adc_prof_{c_idx}.json"
+            adc_profile_filename = f"{result_path}/adc_prof_{stats.config_idx}.json"
             acs_int.dump_adc_profile(adc_profile_filename)
 
         del acs_int
@@ -607,6 +609,7 @@ def _get_matching_dataset(
 def run_experiments(exp: ExpConfig,
                     exp_name: str,
                     n_jobs: int,
+                    n_sim_threads: int,
                     dbg: bool = False,
                     use_same_inputs: bool = False,
                     save_sim_stats: bool = False,
@@ -636,10 +639,12 @@ def run_experiments(exp: ExpConfig,
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs),
                                        _get_matching_dataset(c, datasets),
-                                       False, use_same_inputs, c_idx_offset, result_path))
+                                       False, use_same_inputs, c_idx_offset,
+                                       result_path, n_sim_threads))
     else:
         args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets),
-                      False, use_same_inputs, c_idx_offset, result_path)
+                      False, use_same_inputs, c_idx_offset, result_path,
+                      n_sim_threads)
                      for c_idx, c in enumerate(cfgs)]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:
@@ -655,7 +660,8 @@ def run_experiments(exp: ExpConfig,
             'top5_batch': top5_batch,
             'top1_baseline': top1_baseline,
             'top5_baseline': top5_baseline,
-            'sim_time_batch_ns': sim_time_batch_ns
+            'sim_time_batch_ns': sim_time_batch_ns,
+            'config_idx': int(stats.config_idx)
         }
         cfg.update(metrics)
         df = pd.concat([df, pd.DataFrame([cfg])], ignore_index=True)
