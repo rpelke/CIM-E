@@ -40,7 +40,7 @@ class ExpConfig:
     w_res: Optional[List[float]] = None
 
     def __check_paramters(self):
-        if self.nn_data_set not in ["cifar10", "cifar100"]:
+        if self.nn_data_set not in ["cifar10", "cifar100", "mnist"]:
             raise ValueError("nn_data_set not supported.")
         for ifm_shape in self.ifm:
             for elem in ifm_shape:

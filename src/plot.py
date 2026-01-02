@@ -120,6 +120,7 @@ def adc_profile_plot(df: pd.DataFrame, store_path: str, s_cat: list,
     bnn_mode_labels = ["BNN_I", "BNN_II",
                        "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
+
     for nn_name in list(df['nn_name'].unique()):
         print(f"Generate plots for {nn_name}.")
         df_nn = df[(df['nn_name'] == nn_name)]
@@ -132,84 +133,54 @@ def adc_profile_plot(df: pd.DataFrame, store_path: str, s_cat: list,
         m_modes = list(df_nn['m_mode'].unique())
         bnn_modes = [bm for bm in bnn_mode_labels if bm in m_modes]
         tnn_modes = [tm for tm in tnn_mode_labels if tm in m_modes]
+        mm_sets = {'bnn': bnn_modes, 'tnn': tnn_modes}
 
         layers = profiles[int(df_nn.at[0, "config_idx"])].keys()
         fig = plt.figure(figsize=(12, 4))
         print(f"Layers: {layers}.")
 
-        if len(bnn_modes) > 0:
-            fig, axs = plt.subplots(1, len(bnn_modes), figsize=(
-                10, 3), layout='constrained', sharey=True)
-            axs = axs.flatten() if len(bnn_modes) > 1 else [axs]
-            axs[0].set_ylabel("Frequency")
-            for n, bm in enumerate(bnn_modes):
-                print(f"Plotting for {bm}.")
-                axs[n].set_title(bm)
-                c_idx = int(
-                    df_nn[(df_nn["m_mode"] == bm)].loc[:, "config_idx"])
-                for i, l_name in enumerate(layers):
-                    l_data = profiles[c_idx][l_name]
-                    color = colors[i]
+        for mm_set_name, mm_set in mm_sets:
+            if len(mm_set) > 0:
+                fig, axs = plt.subplots(1, len(mm_set), figsize=(
+                    12, 3), layout='tight', sharey=True)
+                axs = axs.flatten() if len(mm_set) > 1 else [axs]
+                axs[0].set_ylabel("Frequency")
+                for n, mm in enumerate(mm_set):
+                    print(f"Plotting for {mm}.")
+                    axs[n].set_title(mm)
+                    c_idx = int(
+                        df_nn[(df_nn["m_mode"] == mm)].loc[:, "config_idx"])
+                    for i, l_name in enumerate(layers):
+                        l_data = profiles[c_idx][l_name]
+                        color = colors[i]
 
-                    bins = np.array([b for b, _ in l_data["hist"]])
-                    cnts = np.array([c for _, c in l_data["hist"]])
-                    density = cnts / cnts.max()
-                    axs[n].step(bins, density, where='mid', linewidth=1.0,
-                                label=l_name, color=color)
+                        bins = np.array([b for b, _ in l_data["hist"]])
+                        cnts = np.array([c for _, c in l_data["hist"]])
+                        density = cnts / cnts.max()
+                        axs[n].step(bins, density, where='mid', linewidth=0.8,
+                                    label=l_name, color=color, alpha=0.5)
 
-            unique_handles_labels = {}
-            for handle, label in zip(axs[0].get_legend_handles_labels()[0],
-                                     axs[0].get_legend_handles_labels()[1]):
-                if label not in unique_handles_labels.values():
-                    unique_handles_labels[handle] = label
+                        # if bins.min() < 0:
+                        #     axs[n].set_xlim([-5000, 5000])
+                        # else:
+                        #     axs[n].set_xlim([0, 10000])
 
-            fig.legend(
-                unique_handles_labels.keys(),
-                unique_handles_labels.values(),
-                loc='outside lower center',
-                ncol=3)
+                        unique_handles_labels = {}
+                        for handle, label in zip(axs[0].get_legend_handles_labels()[0],
+                                                 axs[0].get_legend_handles_labels()[1]):
+                            if label not in unique_handles_labels.values():
+                                unique_handles_labels[handle] = label
 
-            fig.savefig(
-                f"{store_path}/adc_profile_bnn_{nn_name}.pdf", dpi=300)
-            fig.savefig(
-                f"{store_path}/adc_profile_bnn_{nn_name}.png", dpi=300)
+                        fig.legend(
+                            unique_handles_labels.keys(),
+                            unique_handles_labels.values(),
+                            loc='outside lower center',
+                            ncol=3)
 
-        if len(tnn_modes) > 0:
-            fig, axs = plt.subplots(1, len(tnn_modes), figsize=(
-                10, 3), layout='constrained', sharey=True)
-            axs = axs.flatten() if len(tnn_modes) > 1 else [axs]
-            axs[0].set_ylabel("Frequency")
-            for n, tm in enumerate(tnn_modes):
-                print(f"Plotting for {tm}.")
-                axs[n].set_title(tm)
-                c_idx = int(
-                    df_nn[(df_nn["m_mode"] == tm)].loc[0, "config_idx"])
-                for i, l_name in enumerate(layers):
-                    l_data = profiles[c_idx][l_name]
-                    color = colors[i]
-
-                    bins = np.array([b for b, _ in l_data["hist"]])
-                    cnts = np.array([c for _, c in l_data["hist"]])
-                    density = cnts / cnts.max()
-                    axs[n].step(bins, density, where='mid',linewidth=1.0,
-                                label=l_name, color=color)
-
-            unique_handles_labels = {}
-            for handle, label in zip(axs[0].get_legend_handles_labels()[0],
-                                     axs[0].get_legend_handles_labels()[1]):
-                if label not in unique_handles_labels.values():
-                    unique_handles_labels[handle] = label
-
-            fig.legend(
-                unique_handles_labels.keys(),
-                unique_handles_labels.values(),
-                loc='outside lower center',
-                ncol=3)
-
-            fig.savefig(
-                f"{store_path}/adc_profile_tnn_{nn_name}.pdf", dpi=300)
-            fig.savefig(
-                f"{store_path}/adc_profile_tnn_{nn_name}.png", dpi=300)
+                        fig.savefig(
+                            f"{store_path}/adc_profile_{mm_set_name}_{nn_name}.pdf", dpi=300)
+                        fig.savefig(
+                            f"{store_path}/adc_profile_{mm_set_name}_{nn_name}.png", dpi=300)
 
 
 def variability_lrs_plot(df: pd.DataFrame,
@@ -722,6 +693,75 @@ def read_disturb_mitigation_comparison(store_path: str, hw_path: str,
             plt.close()
 
 
+def parasitics_plot(df: pd.DataFrame,
+                    store_path: str,
+                    s_cat: list,
+                    d_cat: list,
+                    plt_legend_nr: int = -1) -> None:
+    bnn_mode_labels = ["BNN_I", "BNN_II",
+                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+    tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
+
+    for nn_name in list(df['nn_name'].unique()):
+        print(f"Generate plots for {nn_name}.")
+        df_nn = df[(df['nn_name'] == nn_name)]
+
+        if 'num_runs' in d_cat:
+            max_num_runs = max(df_nn['num_runs'].unique())
+            df_nn = df_nn[(df_nn['num_runs'] == max_num_runs)]
+
+        if 'w_res' in d_cat:
+            print("Found experiment for parasitic resistance (x-Axis).")
+
+        xbar_sizes = df_nn['xbar_size'].unique()
+
+        # Count modes in experiment
+        m_modes = list(df_nn['m_mode'].unique())
+        bnn_modes = [bm for bm in bnn_mode_labels if bm in m_modes]
+        tnn_modes = [tm for tm in tnn_mode_labels if tm in m_modes]
+        mm_sets = {'bnn': bnn_modes, 'tnn': tnn_modes}
+
+        for mm_set_name, mm_set in mm_sets:
+            if len(mm_set) > 0:
+                fig, axs = plt.subplots(1, len(xbar_sizes), figsize=(
+                    3.7 * len(xbar_sizes), 3), layout='tight', sharey=True)
+                axs = axs.flatten() if len(mm_set) > 1 else [axs]
+                axs[0].set_ylabel("Top-1 Accuracy (%)")
+                axs[0].legend(loc='lower left', fontsize=12, ncol=2)
+                for n, xs in enumerate(xbar_sizes):
+                    print(f"Plotting for {mm_set_name}: {xs}")
+
+                    axs[n].set_title(xs)
+                    df_xs = df_nn[(df_nn['xbar_size'] == xs)]
+                    base_top1 = df_nn['top1_baseline'].unique()
+                    assert len(base_top1) == 1
+                    axs[n].axhline(
+                        y=base_top1[0], color='black', linestyle='--')
+                    for mm in mm_set:
+                        df_xs_mm = df_xs[(df_xs['m_mode'] == mm)
+                                         ].sort_values(by='w_res')
+                        axs[n].plot(df_xs_mm['w_res'],
+                                    df_xs_mm['top1'],
+                                    marker='x',
+                                    label=f"{mm.replace('_', ' ')}",
+                                    color=color_mode[mm])
+
+                    if nn_name.startswith('cifar100'):
+                        axs[n].ylim(1, min(100, base_top1 + 1))
+                    elif nn_name.startswith('cifar10'):
+                        axs[n].ylim(10, min(100, base_top1 + 1))
+                    elif nn_name.startswith('mnist'):
+                        axs[n].ylim(10, min(100, base_top1 + 1))
+
+                    axs[n].xticks(fontsize=12)
+                    axs[n].yticks(fontsize=12)
+
+                fig.savefig(
+                    f"{store_path}/parasitics_{mm_set_name}_{nn_name}.pdf", dpi=300)
+                fig.savefig(
+                    f"{store_path}/parasitics_{mm_set_name}_{nn_name}.png", dpi=300)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',
@@ -763,7 +803,7 @@ if __name__ == "__main__":
                        store_path=store_path,
                        s_cat=cat_static,
                        d_cat=cat_dynamic)
-    elif exp_name == 'adc_profile':
+    elif exp_name == 'adc_profile' or exp_name == 'adc_profile_new':
         profiles: dict[int, dict] = {
             c: json.load(open(f"{exp_result_path}/adc_prof_{c}.json", 'r'))
             for c in df.loc[:, "config_idx"].to_numpy(dtype=np.int32)}

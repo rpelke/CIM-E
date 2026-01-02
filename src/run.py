@@ -199,6 +199,22 @@ def _get_dataset(
         else:
             raise ValueError("Dataset not supported")
 
+    elif nn_name in ['LeNet']:
+        if nn_data_set == 'mnist':
+            num_classes = 10
+            (train_images, train_labels), (test_images,
+                                           test_labels) = tf.keras.datasets.mnist.load_data()
+            train_images, train_labels, test_images, test_labels = \
+                train_images[:num_data], train_labels[:num_data], \
+                test_images[:num_data], test_labels[:num_data]
+            train_images = train_images.reshape(
+                (num_data, 28, 28, 1)).astype("float32")
+            test_images = test_images.reshape(
+                (num_data, 28, 28, 1)).astype("float32")
+            train_images, test_images = train_images / 127.5 - 1, test_images / 127.5 - 1
+        else:
+            raise ValueError("Dataset not supported")
+
     else:
         raise ValueError("Dataset not supported")
 
@@ -252,6 +268,8 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
         acs_data["resolution"] = cfg['resolution']
     if cfg.get('adc_profile') != None:
         acs_data["adc_profile"] = cfg['adc_profile']
+        if cfg.get('adc_profile'):
+            acs_data["adc_profile_bin_size"] = 100
     if cfg.get('read_disturb') != None:
         acs_data["read_disturb"] = cfg['read_disturb']
     if cfg.get('V_read') != None:
