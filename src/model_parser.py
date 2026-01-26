@@ -80,5 +80,16 @@ def get_model_name(cfg: str) -> str:
         mode = 'tnn'
     else:
         raise ValueError("Unknown mode.")
-    model_name = f"{mode}_{cfg['nn_data_set']}_{cfg['nn_name']}_b{cfg['batch']}_mxn{cfg['xbar_size'][0]}x{cfg['xbar_size'][1]}_inp{cfg['batch']}x{cfg['ifm'][0]}x{cfg['ifm'][1]}x{cfg['ifm'][2]}.so"
+
+    m_xbar = cfg['xbar_size'][0]
+    n_xbar = cfg['xbar_size'][1]
+
+    # Special mappings
+    # if cfg['m_mode'] == "BNN_V":
+    #     m_xbar = cfg['xbar_size'][0] * 2
+
+    if cfg['m_mode'] in ["BNN_V", "BNN_VI", "TNN_I"]:
+        n_xbar = cfg['xbar_size'][1] // 2
+
+    model_name = f"{mode}_{cfg['nn_data_set']}_{cfg['nn_name']}_b{cfg['batch']}_mxn{m_xbar}x{n_xbar}_inp{cfg['batch']}x{cfg['ifm'][0]}x{cfg['ifm'][1]}x{cfg['ifm'][2]}.so"
     return model_name
