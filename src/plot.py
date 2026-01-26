@@ -25,14 +25,14 @@ from RWTHColors import ColorManager
 cm = ColorManager()
 
 colors = [
-    cm.RWTHBlau(),      # blue
+    cm.RWTHBlau(),  # blue
     cm.RWTHBordeaux(),  # bordeaux
-    cm.RWTHGruen(),     # green
-    cm.RWTHOrange(),    # orange
-    cm.RWTHTuerkis(),   # turquoise
+    cm.RWTHGruen(),  # green
+    cm.RWTHOrange(),  # orange
+    cm.RWTHTuerkis(),  # turquoise
     cm.RWTHMaiGruen(),  # light green
-    cm.RWTHMagenta(),   # magenta
-    cm.RWTHPetrol()     # petrol
+    cm.RWTHMagenta(),  # magenta
+    cm.RWTHPetrol()  # petrol
 ]
 
 color_mode = {

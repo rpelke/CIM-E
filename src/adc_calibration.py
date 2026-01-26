@@ -17,10 +17,12 @@ from json.decoder import JSONDecodeError
 def statistical_limits(layer_profile: dict):
     mean = layer_profile['mean']
     std_dev = math.sqrt(layer_profile['var'])
-    return [mean - 3*std_dev, mean + 3*std_dev]
+    return [mean - 3 * std_dev, mean + 3 * std_dev]
 
 
-def bounds_limits(layer_profile: dict, bin_size: float = 10.0, max_tolerence: float = 0.0):
+def bounds_limits(layer_profile: dict,
+                  bin_size: float = 10.0,
+                  max_tolerence: float = 0.0):
     values = {k: v for k, v in layer_profile['hist'] if v > 0.0}
     tolerence = layer_profile['samples'] * max_tolerence
     ss = 0
@@ -39,7 +41,9 @@ def bounds_limits(layer_profile: dict, bin_size: float = 10.0, max_tolerence: fl
     return [max(min_val - bin_size, 0.0), max_val]
 
 
-def optimize_adc_limits(layer_profile: dict[str, float], m_mode: str, bin_size: float = 10.0):
+def optimize_adc_limits(layer_profile: dict[str, float],
+                        m_mode: str,
+                        bin_size: float = 10.0):
     non_differential_modes = ['BNN_III', 'BNN_IV', 'BNN_V', 'TNN_IV', 'TNN_V']
     if m_mode in non_differential_modes:
         limits = bounds_limits(layer_profile, bin_size)
@@ -48,7 +52,8 @@ def optimize_adc_limits(layer_profile: dict[str, float], m_mode: str, bin_size: 
     return limits
 
 
-def run_calibration(df: pd.DataFrame, store_path: str, profiles: dict[int, dict]):
+def run_calibration(df: pd.DataFrame, store_path: str, profiles: dict[int,
+                                                                      dict]):
     """Perform calibration for the given profiling run."""
     calibrated_limits: dict[str, dict] = {}
     for nn_name in list(df['nn_name'].unique()):
@@ -62,8 +67,8 @@ def run_calibration(df: pd.DataFrame, store_path: str, profiles: dict[int, dict]
             calibrated_limits[nn_name][xs] = {}
             for mm in list(df_nn['m_mode'].unique()):
                 calibrated_limits[nn_name][xs][mm] = {}
-                c_idx = int(
-                    df_nn[(df_nn["m_mode"] == mm) & (df_nn['xbar_size'] == xs)].loc[:, "config_idx"].iloc[0])
+                c_idx = int(df_nn[(df_nn["m_mode"] == mm) & (
+                    df_nn['xbar_size'] == xs)].loc[:, "config_idx"].iloc[0])
                 for l_name in layers:
                     l_data = profiles[c_idx][l_name]
                     limits = optimize_adc_limits(l_data, mm, bin_size)
@@ -85,7 +90,8 @@ def main(args):
     store_path = args.to_patch.split('.json')[0] + "_patched.json"
     profiles: dict[int, dict] = {
         c: json.load(open(f"{exp_result_path}/adc_prof_{c}.json", 'r'))
-        for c in df.loc[:, "config_idx"].to_numpy(dtype=np.int32)}
+        for c in df.loc[:, "config_idx"].to_numpy(dtype=np.int32)
+    }
 
     calibrated_limits = run_calibration(df, store_path, profiles)
 

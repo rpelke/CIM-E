@@ -205,8 +205,9 @@ def _get_dataset(
     elif nn_name in ['LeNet']:
         if nn_data_set == 'mnist':
             num_classes = 10
-            (train_images, train_labels), (test_images,
-                                           test_labels) = tf.keras.datasets.mnist.load_data()
+            (train_images, train_labels), (
+                test_images,
+                test_labels) = tf.keras.datasets.mnist.load_data()
             train_images, train_labels, test_images, test_labels = \
                 train_images[:num_data], train_labels[:num_data], \
                 test_images[:num_data], test_labels[:num_data]
@@ -276,8 +277,8 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     if cfg.get('adc_calib_mode') is not None:
         acs_data["adc_calib_mode"] = cfg['adc_calib_mode']
     if cfg.get('adc_calib_dict') is not None:
-        acs_data["adc_calib_dict"] = cfg['adc_calib_dict'][cfg['nn_name']
-                                                           ][str(cfg['xbar_size'])][cfg['m_mode']]
+        acs_data["adc_calib_dict"] = cfg['adc_calib_dict'][cfg['nn_name']][str(
+            cfg['xbar_size'])][cfg['m_mode']]
     if cfg.get('read_disturb') is not None:
         acs_data["read_disturb"] = cfg['read_disturb']
     if cfg.get('V_read') is not None:
@@ -670,10 +671,11 @@ def run_experiments(exp: ExpConfig,
                                        False, use_same_inputs, c_idx_offset,
                                        result_path, n_sim_threads))
     else:
-        args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets),
-                      False, use_same_inputs, c_idx_offset, result_path,
-                      n_sim_threads)
-                     for c_idx, c in enumerate(cfgs)]
+        args_list = [
+            (c, c_idx, len(cfgs), _get_matching_dataset(c, datasets), False,
+             use_same_inputs, c_idx_offset, result_path, n_sim_threads)
+            for c_idx, c in enumerate(cfgs)
+        ]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)

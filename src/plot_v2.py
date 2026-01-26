@@ -26,15 +26,15 @@ from RWTHColors import ColorManager
 cm = ColorManager()
 
 colors = [
-    cm.RWTHBlau(),      # blue
-    cm.RWTHOrange(),    # orange
+    cm.RWTHBlau(),  # blue
+    cm.RWTHOrange(),  # orange
     cm.RWTHMaiGruen(),  # light green
-    cm.RWTHGruen(),     # green
+    cm.RWTHGruen(),  # green
     cm.RWTHBordeaux(),  # bordeaux
-    cm.RWTHTuerkis(),   # turquoise
-    cm.RWTHMagenta(),   # magenta
-    cm.RWTHPetrol(),    # petrol
-    cm.RWTHViolett(),   # violet
+    cm.RWTHTuerkis(),  # turquoise
+    cm.RWTHMagenta(),  # magenta
+    cm.RWTHPetrol(),  # petrol
+    cm.RWTHViolett(),  # violet
 ]
 
 grid_color = cm.RWTHSchwarz(25)
@@ -85,8 +85,9 @@ nn_labels = {"VGG7": "VGG-7", "LeNet": "LeNet-5"}
 
 def adc_profile_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                      d_cat: list, profiles: dict[int, dict]):
-    bnn_mode_labels = ["BNN_I", "BNN_II",
-                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+    bnn_mode_labels = [
+        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
+    ]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
     xbar_size = "[256, 256]"
 
@@ -109,15 +110,18 @@ def adc_profile_plot(df: pd.DataFrame, store_path: str, s_cat: list,
 
         for mm_set_name, mm_set in mm_sets.items():
             if len(mm_set) > 0:
-                fig, axs = plt.subplots(1, len(mm_set), figsize=(
-                    2*len(mm_set), 3), layout='constrained', sharey=True)
+                fig, axs = plt.subplots(1,
+                                        len(mm_set),
+                                        figsize=(2 * len(mm_set), 3),
+                                        layout='constrained',
+                                        sharey=True)
                 axs = axs.flatten() if len(mm_set) > 1 else [axs]
                 axs[0].set_ylabel("Frequency")
                 for n, mm in enumerate(mm_set):
                     print(f"Plotting for {mm}.")
                     axs[n].set_title(mm.replace('NN_', ' '))
-                    c_idx = int(
-                        df_nn[(df_nn["m_mode"] == mm)].loc[:, "config_idx"].iloc[0])
+                    c_idx = int(df_nn[(
+                        df_nn["m_mode"] == mm)].loc[:, "config_idx"].iloc[0])
                     for i, l_name in enumerate(layers):
                         l_data = profiles[c_idx][l_name]
                         color = colors[i]
@@ -125,10 +129,18 @@ def adc_profile_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                         bins = np.array([b for b, _ in l_data["hist"]])
                         cnts = np.array([c for _, c in l_data["hist"]])
                         density = cnts / cnts.max()
-                        axs[n].step(bins, density, where='mid', linewidth=0.8,
-                                    label=l_name, color=color, alpha=0.7)
-                        axs[n].fill_between(bins, density, step='mid',
-                                            color=color, alpha=0.05)
+                        axs[n].step(bins,
+                                    density,
+                                    where='mid',
+                                    linewidth=0.8,
+                                    label=l_name,
+                                    color=color,
+                                    alpha=0.7)
+                        axs[n].fill_between(bins,
+                                            density,
+                                            step='mid',
+                                            color=color,
+                                            alpha=0.05)
 
                     if bins.min() < 0:
                         axs[n].set_xlim([-500, 500])
@@ -136,34 +148,37 @@ def adc_profile_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                         axs[n].set_xlim([0, 1000])
 
                     unique_handles_labels = {}
-                    for handle, label in zip(axs[0].get_legend_handles_labels()[0],
-                                             axs[0].get_legend_handles_labels()[1]):
+                    for handle, label in zip(
+                            axs[0].get_legend_handles_labels()[0],
+                            axs[0].get_legend_handles_labels()[1]):
                         if label not in unique_handles_labels.values():
                             unique_handles_labels[handle] = label
 
                     axs[n].tick_params(axis='both', labelsize=10)
-                    axs[n].grid(axis='y', linestyle=':',
-                                color=grid_color)
-                    axs[n].set_xlabel(
-                        r"ADC Input Current $(\mu A)$")
+                    axs[n].grid(axis='y', linestyle=':', color=grid_color)
+                    axs[n].set_xlabel(r"ADC Input Current $(\mu A)$")
 
-                fig.legend(
-                    unique_handles_labels.keys(),
-                    unique_handles_labels.values(),
-                    loc='outside lower center',
-                    ncol=3)
+                fig.legend(unique_handles_labels.keys(),
+                           unique_handles_labels.values(),
+                           loc='outside lower center',
+                           ncol=3)
 
                 fig.savefig(
-                    f"{store_path}/adc_profile_{mm_set_name}_{nn_name}.pdf", dpi=300)
+                    f"{store_path}/adc_profile_{mm_set_name}_{nn_name}.pdf",
+                    dpi=300)
                 fig.savefig(
-                    f"{store_path}/adc_profile_{mm_set_name}_{nn_name}.png", dpi=300)
+                    f"{store_path}/adc_profile_{mm_set_name}_{nn_name}.png",
+                    dpi=300)
 
 
-def adc_calibration_plot(df: pd.DataFrame, store_path: str, s_cat: list,
-                         d_cat: list, plt_legend: bool = True
-                         ):
-    bnn_mode_labels = ["BNN_I", "BNN_II",
-                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+def adc_calibration_plot(df: pd.DataFrame,
+                         store_path: str,
+                         s_cat: list,
+                         d_cat: list,
+                         plt_legend: bool = True):
+    bnn_mode_labels = [
+        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
+    ]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
 
     adc_calib_mode_markers = {'MAX': 'x', 'CALIB': 'o'}
@@ -192,26 +207,33 @@ def adc_calibration_plot(df: pd.DataFrame, store_path: str, s_cat: list,
 
             for mm_set_name, mm_set in mm_sets.items():
                 if len(mm_set) > 0:
-                    fig, axs = plt.subplots(1, len(xbar_sizes), figsize=(
-                        2 * len(xbar_sizes), fig_height), layout='tight', sharey=True)
+                    fig, axs = plt.subplots(1,
+                                            len(xbar_sizes),
+                                            figsize=(2 * len(xbar_sizes),
+                                                     fig_height),
+                                            layout='tight',
+                                            sharey=True)
                     axs = axs.flatten() if len(xbar_sizes) > 1 else [axs]
                     axs[0].set_ylabel("Top-1 Accuracy (\\%)",
                                       fontsize=label_fontsize)
                     for n, xs in enumerate(xbar_sizes):
                         print(f"Plotting for {mm_set_name}: {xs}")
                         axs[n].set_title(
-                            f"{nn_labels[nn_name]} - {mm_set_name} - {xs[1:-1].replace(', ', times_str)}", fontsize=title_fontsize)
+                            f"{nn_labels[nn_name]} - {mm_set_name} - {xs[1:-1].replace(', ', times_str)}",
+                            fontsize=title_fontsize)
                         df_xs_mms = df_nn[(df_nn['xbar_size'] == xs) & (
                             df_nn['m_mode'].str.startswith(mm_set_name))]
                         base_top1 = df_xs_mms['top1_baseline'].unique()
                         assert len(base_top1) == 1
-                        axs[n].axhline(
-                            y=base_top1[0], color='black', linestyle='--')
+                        axs[n].axhline(y=base_top1[0],
+                                       color='black',
+                                       linestyle='--')
                         for mm in mm_set:
                             for acm in adc_calib_modes:
-                                df_xs_mm = df_xs_mms[(df_xs_mms['m_mode'] == mm) &
-                                                     (df_xs_mms['adc_calib_mode'] == acm)
-                                                     ].sort_values(by='resolution')
+                                df_xs_mm = df_xs_mms[
+                                    (df_xs_mms['m_mode'] == mm)
+                                    & (df_xs_mms['adc_calib_mode'] == acm
+                                       )].sort_values(by='resolution')
                                 axs[n].plot(df_xs_mm['resolution'],
                                             df_xs_mm['top1'],
                                             marker=adc_calib_mode_markers[acm],
@@ -222,8 +244,8 @@ def adc_calibration_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                         axs[n].set_xlim(axs[n].get_xlim()[::-1])
                         axs[n].set_xticks(resolutions)
                         axs[n].tick_params(axis='both', labelsize=10)
-                        axs[n].set_xlabel(
-                            r"ADC Resolution (bits)", fontsize=label_fontsize)
+                        axs[n].set_xlabel(r"ADC Resolution (bits)",
+                                          fontsize=label_fontsize)
                         axs[n].grid(axis='y', linestyle=':', color=grid_color)
 
                         if plt_legend:
@@ -231,23 +253,33 @@ def adc_calibration_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                             # Legend for markers (ADC calibration modes)
                             marker_legend = [
                                 # markersize=10,
-                                mlines.Line2D([], [], color='black',
-                                              marker=m, linestyle='None', label=acm)
+                                mlines.Line2D([], [],
+                                              color='black',
+                                              marker=m,
+                                              linestyle='None',
+                                              label=acm)
                                 for acm, m in adc_calib_mode_legend.items()
                             ]
-                        # Legend for colors (Mapping modes)
+                            # Legend for colors (Mapping modes)
                             color_legend = [
                                 # linewidth=2,
-                                mlines.Line2D(
-                                    [], [], color=c, marker='None', linestyle='-', label=mm.replace('NN_', ' '))
+                                mlines.Line2D([], [],
+                                              color=c,
+                                              marker='None',
+                                              linestyle='-',
+                                              label=mm.replace('NN_', ' '))
                                 for mm, c in color_mode.items() if mm in mm_set
                             ]
                             axs[0].legend(handles=marker_legend + color_legend,
-                                          loc='lower left', fontsize=legend_fontsize, ncol=1)
+                                          loc='lower left',
+                                          fontsize=legend_fontsize,
+                                          ncol=1)
                         fig.savefig(
-                            f"{store_path}/adc_calib_{mm_set_name}_{nn_name}.pdf", dpi=300)
+                            f"{store_path}/adc_calib_{mm_set_name}_{nn_name}.pdf",
+                            dpi=300)
                         fig.savefig(
-                            f"{store_path}/adc_calib_{mm_set_name}_{nn_name}.png", dpi=300)
+                            f"{store_path}/adc_calib_{mm_set_name}_{nn_name}.png",
+                            dpi=300)
 
 
 def scale_variability_plot(df: pd.DataFrame,
@@ -256,8 +288,9 @@ def scale_variability_plot(df: pd.DataFrame,
                            d_cat: list,
                            state: str,
                            plt_legend_nr: int = -1) -> None:
-    bnn_mode_labels = ["BNN_I", "BNN_II",
-                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+    bnn_mode_labels = [
+        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
+    ]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
 
     this_label = f"{state}_noise"
@@ -290,36 +323,48 @@ def scale_variability_plot(df: pd.DataFrame,
                     for hrs_lrs_str in hrs_lrs:
                         hrs, lrs = ast.literal_eval(hrs_lrs_str)
                         df_hrs_lrs = df_nn[(df_nn['hrs_lrs'] == hrs_lrs_str)]
-                        fig, axs = plt.subplots(1, len(xbar_sizes), figsize=(
-                            3.7 * len(xbar_sizes), 3), layout='tight', sharey=True)
-                        axs = axs.flatten() if len(
-                            xbar_sizes) > 1 else [axs[0]]
+                        fig, axs = plt.subplots(1,
+                                                len(xbar_sizes),
+                                                figsize=(3.7 * len(xbar_sizes),
+                                                         3),
+                                                layout='tight',
+                                                sharey=True)
+                        axs = axs.flatten() if len(xbar_sizes) > 1 else [
+                            axs[0]
+                        ]
                         axs[0].set_ylabel("Top-1 Accuracy (\\%)")
 
                         for n, xs in enumerate(xbar_sizes):
                             print(f"Plotting for {mm_set_name}: {xs}")
                             axs[n].set_title(
-                                f"Crossbar Size: {xs[1:-1].replace(', ', times_str)}")
-                            df_xs_mms = df_hrs_lrs[(df_hrs_lrs['xbar_size'] == xs) & (
-                                df_hrs_lrs['m_mode'].str.startswith(mm_set_name))]
+                                f"Crossbar Size: {xs[1:-1].replace(', ', times_str)}"
+                            )
+                            df_xs_mms = df_hrs_lrs[
+                                (df_hrs_lrs['xbar_size'] == xs)
+                                & (df_hrs_lrs['m_mode'].str.startswith(
+                                    mm_set_name))]
                             base_top1 = df_xs_mms['top1_baseline'].unique()
                             assert len(base_top1) == 1
-                            axs[n].axhline(
-                                y=base_top1[0], color='black', linestyle='--')
+                            axs[n].axhline(y=base_top1[0],
+                                           color='black',
+                                           linestyle='--')
 
                             for mm in mm_set:
-                                df_xs_mm = df_xs_mms[(df_xs_mms['m_mode'] == mm)
-                                                     ].sort_values(by=this_label)
+                                df_xs_mm = df_xs_mms[(
+                                    df_xs_mms['m_mode'] == mm)].sort_values(
+                                        by=this_label)
                                 print(
                                     f"---------------------------------------------------------"
                                 )
                                 print(f"Best results for {nn_name} and {mm}:")
-                                best_of = df_xs_mm[
-                                    (df_xs_mm['top1'] >=
-                                     max(df_xs_mm['top1_baseline'].unique()) -
-                                     1)].sort_values(by='lrs_noise', ascending=True)
+                                best_of = df_xs_mm[(df_xs_mm['top1'] >= max(
+                                    df_xs_mm['top1_baseline'].unique()) -
+                                                    1)].sort_values(
+                                                        by='lrs_noise',
+                                                        ascending=True)
                                 print(best_of[[
-                                    'xbar_size', 'm_mode', 'hrs_noise', 'lrs_noise', 'top1'
+                                    'xbar_size', 'm_mode', 'hrs_noise',
+                                    'lrs_noise', 'top1'
                                 ]])
                                 axs[n].plot(df_xs_mm[this_label],
                                             df_xs_mm['top1'],
@@ -333,14 +378,17 @@ def scale_variability_plot(df: pd.DataFrame,
                             axs[n].tick_params(axis='both', labelsize=10)
                             axs[n].set_xlabel(
                                 rf"{state.upper()} $\sigma (\mu A)$")
-                            axs[n].grid(axis='y', linestyle=':',
+                            axs[n].grid(axis='y',
+                                        linestyle=':',
                                         color=grid_color)
 
                         axs[0].legend(loc='lower left', fontsize=8, ncol=2)
                         fig.savefig(
-                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_{hrs_lrs}.pdf", dpi=300)
+                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_{hrs_lrs}.pdf",
+                            dpi=300)
                         fig.savefig(
-                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_{hrs_lrs}.png", dpi=300)
+                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_{hrs_lrs}.png",
+                            dpi=300)
 
 
 def scale_variability_plot_with_c2c(df: pd.DataFrame,
@@ -350,8 +398,9 @@ def scale_variability_plot_with_c2c(df: pd.DataFrame,
                                     d_cat: list,
                                     state: str,
                                     plt_legend: bool = True) -> None:
-    bnn_mode_labels = ["BNN_I", "BNN_II",
-                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+    bnn_mode_labels = [
+        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
+    ]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
 
     this_label = f"{state}_noise"
@@ -392,40 +441,54 @@ def scale_variability_plot_with_c2c(df: pd.DataFrame,
                         df_hrs_lrs = df_nn[(df_nn['hrs_lrs'] == hrs_lrs_str)]
                         df_c2c_hrs_lrs = df_c2c_nn[(
                             df_c2c_nn['hrs_lrs'] == hrs_lrs_str)]
-                        fig, axs = plt.subplots(1, len(xbar_sizes), figsize=(
-                            fig_width * len(xbar_sizes) / 4, 3), layout='tight', sharey=True)
+                        fig, axs = plt.subplots(
+                            1,
+                            len(xbar_sizes),
+                            figsize=(fig_width * len(xbar_sizes) / 4, 3),
+                            layout='tight',
+                            sharey=True)
                         axs = axs.flatten() if len(mm_set) > 1 else [axs]
-                        axs[0].set_ylabel(
-                            "Top-1 Accuracy (\\%)", fontsize=label_fontsize)
+                        axs[0].set_ylabel("Top-1 Accuracy (\\%)",
+                                          fontsize=label_fontsize)
 
                         for n, xs in enumerate(xbar_sizes):
                             print(f"Plotting for {mm_set_name}: {xs}")
                             axs[n].set_title(
-                                f"{mm_set_name} - Crossbar Size: {xs[1:-1].replace(', ', times_str)}", fontsize=title_fontsize)
-                            df_xs_mms = df_hrs_lrs[(df_hrs_lrs['xbar_size'] == xs) & (
-                                df_hrs_lrs['m_mode'].str.startswith(mm_set_name))]
-                            df_c2c_xs_mms = df_c2c_hrs_lrs[(df_c2c_hrs_lrs['xbar_size'] == xs) & (
-                                df_c2c_hrs_lrs['m_mode'].str.startswith(mm_set_name))]
+                                f"{mm_set_name} - Crossbar Size: {xs[1:-1].replace(', ', times_str)}",
+                                fontsize=title_fontsize)
+                            df_xs_mms = df_hrs_lrs[
+                                (df_hrs_lrs['xbar_size'] == xs)
+                                & (df_hrs_lrs['m_mode'].str.startswith(
+                                    mm_set_name))]
+                            df_c2c_xs_mms = df_c2c_hrs_lrs[
+                                (df_c2c_hrs_lrs['xbar_size'] == xs)
+                                & (df_c2c_hrs_lrs['m_mode'].str.startswith(
+                                    mm_set_name))]
                             base_top1 = df_xs_mms['top1_baseline'].unique()
                             assert len(base_top1) == 1
-                            axs[n].axhline(
-                                y=base_top1[0], color='black', linestyle='--')
+                            axs[n].axhline(y=base_top1[0],
+                                           color='black',
+                                           linestyle='--')
 
                             for mm in mm_set:
-                                df_xs_mm = df_xs_mms[(df_xs_mms['m_mode'] == mm)
-                                                     ].sort_values(by=this_label)
-                                df_c2c_xs_mm = df_c2c_xs_mms[(df_c2c_xs_mms['m_mode'] == mm)
-                                                             ].sort_values(by=this_label)
+                                df_xs_mm = df_xs_mms[(
+                                    df_xs_mms['m_mode'] == mm)].sort_values(
+                                        by=this_label)
+                                df_c2c_xs_mm = df_c2c_xs_mms[(
+                                    df_c2c_xs_mms['m_mode'] == mm
+                                )].sort_values(by=this_label)
                                 print(
                                     f"---------------------------------------------------------"
                                 )
                                 print(f"Best results for {nn_name} and {mm}:")
-                                best_of = df_xs_mm[
-                                    (df_xs_mm['top1'] >=
-                                     max(df_xs_mm['top1_baseline'].unique()) -
-                                     1)].sort_values(by='lrs_noise', ascending=True)
+                                best_of = df_xs_mm[(df_xs_mm['top1'] >= max(
+                                    df_xs_mm['top1_baseline'].unique()) -
+                                                    1)].sort_values(
+                                                        by='lrs_noise',
+                                                        ascending=True)
                                 print(best_of[[
-                                    'xbar_size', 'm_mode', 'hrs_noise', 'lrs_noise', 'top1'
+                                    'xbar_size', 'm_mode', 'hrs_noise',
+                                    'lrs_noise', 'top1'
                                 ]])
                                 axs[n].plot(df_xs_mm[this_label],
                                             df_xs_mm['top1'],
@@ -439,12 +502,13 @@ def scale_variability_plot_with_c2c(df: pd.DataFrame,
                             axs[n].set_xticks(noise)
                             axs[n].xaxis.set_major_formatter(
                                 ticker.StrMethodFormatter("{x:.2g}"))
-                            axs[n].tick_params(
-                                axis='both', labelsize=tick_fontsize)
+                            axs[n].tick_params(axis='both',
+                                               labelsize=tick_fontsize)
                             axs[n].set_xlabel(
                                 rf"$\sigma_{{{state}}} \: (\mu A)$",
                                 fontsize=label_fontsize)
-                            axs[n].grid(axis='y', linestyle=':',
+                            axs[n].grid(axis='y',
+                                        linestyle=':',
                                         color=grid_color)
                             axs[n].set_ylim(1, min(100, base_top1 + 1))
 
@@ -453,32 +517,42 @@ def scale_variability_plot_with_c2c(df: pd.DataFrame,
                             # Legend for markers (ADC calibration modes)
                             marker_legend = [
                                 # markersize=10,
-                                mlines.Line2D([], [], color='black',
-                                              marker=m, linestyle='None', label=acm)
+                                mlines.Line2D([], [],
+                                              color='black',
+                                              marker=m,
+                                              linestyle='None',
+                                              label=acm)
                                 for acm, m in var_legend.items()
                             ]
                             # Legend for colors (Mapping modes)
                             color_legend = [
                                 # linewidth=2,
-                                mlines.Line2D(
-                                    [], [], color=c, marker='None', linestyle='-', label=mm.replace('NN_', ' '))
-                                for mm, c in color_mode.items() if mm_set_name in mm
+                                mlines.Line2D([], [],
+                                              color=c,
+                                              marker='None',
+                                              linestyle='-',
+                                              label=mm.replace('NN_', ' '))
+                                for mm, c in color_mode.items()
+                                if mm_set_name in mm
                             ]
                             axs[0].legend(handles=marker_legend + color_legend,
-                                          loc='lower left', fontsize=legend_fontsize, ncol=1)
+                                          loc='lower left',
+                                          fontsize=legend_fontsize,
+                                          ncol=1)
 
                         fig.savefig(
-                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_c2c.pdf", dpi=300)
+                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_c2c.pdf",
+                            dpi=300)
                         fig.savefig(
-                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_c2c.png", dpi=300)
+                            f"{store_path}/{state}_scale_var_{mm_set_name}_{nn_name}_c2c.png",
+                            dpi=300)
 
 
-def parasitics_plot(df: pd.DataFrame,
-                    store_path: str,
-                    s_cat: list,
+def parasitics_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                     d_cat: list) -> None:
-    bnn_mode_labels = ["BNN_I", "BNN_II",
-                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+    bnn_mode_labels = [
+        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
+    ]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
 
     for nn_name in list(df['nn_name'].unique()):
@@ -496,7 +570,7 @@ def parasitics_plot(df: pd.DataFrame,
 
             xbar_sizes = df_nn['xbar_size'].unique()
 
-        # Count modes in experiment
+            # Count modes in experiment
             m_modes = list(df_nn['m_mode'].unique())
             bnn_modes = [bm for bm in bnn_mode_labels if bm in m_modes]
             tnn_modes = [tm for tm in tnn_mode_labels if tm in m_modes]
@@ -504,8 +578,10 @@ def parasitics_plot(df: pd.DataFrame,
 
             for mm_set_name, mm_set in mm_sets.items():
                 if len(mm_set) > 0:
-                    fig, axs = plt.subplots(1, len(xbar_sizes), figsize=(
-                        fig_width * len(xbar_sizes) / 3, fig_height),
+                    fig, axs = plt.subplots(
+                        1,
+                        len(xbar_sizes),
+                        figsize=(fig_width * len(xbar_sizes) / 3, fig_height),
                         layout='tight',
                         sharey=True)
                     axs = axs.flatten() if len(mm_set) > 1 else [axs]
@@ -521,11 +597,13 @@ def parasitics_plot(df: pd.DataFrame,
                             df_nn['m_mode'].str.startswith(mm_set_name))]
                         base_top1 = df_xs_mms['top1_baseline'].unique()
                         assert len(base_top1) == 1
-                        axs[n].axhline(
-                            y=base_top1[0], color='black', linestyle='--')
+                        axs[n].axhline(y=base_top1[0],
+                                       color='black',
+                                       linestyle='--')
                         for mm in mm_set:
-                            df_xs_mm = df_xs_mms[(df_xs_mms['m_mode'] == mm)
-                                                 ].sort_values(by='w_res')
+                            df_xs_mm = df_xs_mms[(
+                                df_xs_mms['m_mode'] == mm)].sort_values(
+                                    by='w_res')
                             axs[n].plot(df_xs_mm['w_res'],
                                         df_xs_mm['top1'],
                                         marker='x',
@@ -535,28 +613,30 @@ def parasitics_plot(df: pd.DataFrame,
                         axs[n].set_xticks(w_res)
                         axs[n].xaxis.set_major_formatter(
                             ticker.StrMethodFormatter("{x:.2g}"))
-                        axs[n].set_xlabel(
-                            r"Parasitic Resistance ($\Omega$)", fontsize=label_fontsize)
-                        axs[n].tick_params(
-                            axis='both', labelsize=tick_fontsize)
+                        axs[n].set_xlabel(r"Parasitic Resistance ($\Omega$)",
+                                          fontsize=label_fontsize)
+                        axs[n].tick_params(axis='both',
+                                           labelsize=tick_fontsize)
 
                         axs[n].set_ylim(1, min(100, base_top1 + 1))
                         axs[n].grid(axis='y', linestyle=':', color=grid_color)
 
                     axs[0].legend(loc='lower left',
-                                  fontsize=label_fontsize, ncol=2)
+                                  fontsize=label_fontsize,
+                                  ncol=2)
                     fig.savefig(
-                        f"{store_path}/parasitics_{mm_set_name}_{nn_name}.pdf", dpi=300)
+                        f"{store_path}/parasitics_{mm_set_name}_{nn_name}.pdf",
+                        dpi=300)
                     fig.savefig(
-                        f"{store_path}/parasitics_{mm_set_name}_{nn_name}.png", dpi=300)
+                        f"{store_path}/parasitics_{mm_set_name}_{nn_name}.png",
+                        dpi=300)
 
 
-def parasitics_multi_plot(df: pd.DataFrame,
-                          store_path: str,
-                          s_cat: list,
+def parasitics_multi_plot(df: pd.DataFrame, store_path: str, s_cat: list,
                           d_cat: list) -> None:
-    bnn_mode_labels = ["BNN_I", "BNN_II",
-                       "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"]
+    bnn_mode_labels = [
+        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
+    ]
     tnn_mode_labels = ["TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"]
 
     nn_marker = {"VGG7": 'o', "LeNet": 'x'}
@@ -583,10 +663,12 @@ def parasitics_multi_plot(df: pd.DataFrame,
 
         for mm_set_name, mm_set in mm_sets.items():
             if len(mm_set) > 0:
-                fig, axs = plt.subplots(1, len(xbar_sizes), figsize=(
-                    fig_width * len(xbar_sizes) / 3, fig_height),
-                    layout='tight',
-                    sharey=True)
+                fig, axs = plt.subplots(1,
+                                        len(xbar_sizes),
+                                        figsize=(fig_width * len(xbar_sizes) /
+                                                 3, fig_height),
+                                        layout='tight',
+                                        sharey=True)
                 axs = axs.flatten() if len(mm_set) > 1 else [axs]
                 axs[0].set_ylabel("Top-1 Accuracy (\\%)",
                                   fontsize=label_fontsize)
@@ -596,17 +678,19 @@ def parasitics_multi_plot(df: pd.DataFrame,
                     axs[n].set_title(
                         f"{mm_set_name} - Crossbar Size: {xs[1:-1].replace(', ', times_str)}",
                         fontsize=title_fontsize)
-                    df_xs_mms = df[(df['xbar_size'] == xs) & (
-                        df['m_mode'].str.startswith(mm_set_name))]
+                    df_xs_mms = df[(df['xbar_size'] == xs) &
+                                   (df['m_mode'].str.startswith(mm_set_name))]
                     for nn in nn_names:
                         df_xs_mms_nn = df_xs_mms[df_xs_mms['nn_name'] == nn]
                         base_top1 = df_xs_mms_nn['top1_baseline'].unique()
                         assert len(base_top1) == 1
-                        axs[n].axhline(
-                            y=base_top1[0], color='black', linestyle=nn_baseline_linestyle[nn])
+                        axs[n].axhline(y=base_top1[0],
+                                       color='black',
+                                       linestyle=nn_baseline_linestyle[nn])
                         for mm in mm_set:
-                            df_xs_mm = df_xs_mms_nn[(df_xs_mms_nn['m_mode'] == mm)
-                                                    ].sort_values(by='w_res')
+                            df_xs_mm = df_xs_mms_nn[(
+                                df_xs_mms_nn['m_mode'] == mm)].sort_values(
+                                    by='w_res')
                             axs[n].plot(df_xs_mm['w_res'],
                                         df_xs_mm['top1'],
                                         marker=nn_marker[nn],
@@ -616,10 +700,9 @@ def parasitics_multi_plot(df: pd.DataFrame,
                     axs[n].set_xticks(w_res)
                     axs[n].xaxis.set_major_formatter(
                         ticker.StrMethodFormatter("{x:.2g}"))
-                    axs[n].set_xlabel(
-                        r"Parasitic Resistance ($\Omega$)", fontsize=label_fontsize)
-                    axs[n].tick_params(
-                        axis='both', labelsize=tick_fontsize)
+                    axs[n].set_xlabel(r"Parasitic Resistance ($\Omega$)",
+                                      fontsize=label_fontsize)
+                    axs[n].tick_params(axis='both', labelsize=tick_fontsize)
 
                     axs[n].set_ylim(1, 101)
                     axs[n].grid(axis='y', linestyle=':', color=grid_color)
@@ -628,23 +711,31 @@ def parasitics_multi_plot(df: pd.DataFrame,
                 # Legend for markers (ADC calibration modes)
                 marker_legend = [
                     # markersize=10,
-                    mlines.Line2D([], [], color='black',
-                                  marker=m, linestyle='None', label=nn_label[nn])
+                    mlines.Line2D([], [],
+                                  color='black',
+                                  marker=m,
+                                  linestyle='None',
+                                  label=nn_label[nn])
                     for nn, m in nn_marker.items()
                 ]
                 # Legend for colors (Mapping modes)
                 color_legend = [
                     # linewidth=2,
-                    mlines.Line2D(
-                        [], [], color=c, marker='None', linestyle='-', label=mm.replace('NN_', ' '))
+                    mlines.Line2D([], [],
+                                  color=c,
+                                  marker='None',
+                                  linestyle='-',
+                                  label=mm.replace('NN_', ' '))
                     for mm, c in color_mode.items() if mm_set_name in mm
                 ]
                 axs[0].legend(handles=marker_legend + color_legend,
-                              loc='lower left', fontsize=legend_fontsize, ncol=1)
-                fig.savefig(
-                    f"{store_path}/parasitics_{mm_set_name}.pdf", dpi=300)
-                fig.savefig(
-                    f"{store_path}/parasitics_{mm_set_name}.png", dpi=300)
+                              loc='lower left',
+                              fontsize=legend_fontsize,
+                              ncol=1)
+                fig.savefig(f"{store_path}/parasitics_{mm_set_name}.pdf",
+                            dpi=300)
+                fig.savefig(f"{store_path}/parasitics_{mm_set_name}.png",
+                            dpi=300)
 
 
 def get_exp_products(config: str):
@@ -698,7 +789,8 @@ if __name__ == "__main__":
     if exp_name.startswith('adc_profile'):
         profiles: dict[int, dict] = {
             c: json.load(open(f"{exp_result_path}/adc_prof_{c}.json", 'r'))
-            for c in df.loc[:, "config_idx"].to_numpy(dtype=np.int32)}
+            for c in df.loc[:, "config_idx"].to_numpy(dtype=np.int32)
+        }
         adc_profile_plot(df=df,
                          store_path=store_path,
                          s_cat=cat_static,
