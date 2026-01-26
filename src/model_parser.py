@@ -55,6 +55,8 @@ def create_experiment(cfg: dict) -> ExpConfig:
         verbose=cfg['verbose'],
         resolution=cfg.get('resolution'),
         adc_profile=cfg.get('adc_profile'),
+        adc_calib_mode=cfg.get('adc_calib_mode'),
+        adc_calib_dict=cfg.get('adc_calib_dict'),
         read_disturb=cfg.get('read_disturb'),
         V_read=cfg.get('V_read'),
         t_read=cfg.get('t_read'),
@@ -64,7 +66,9 @@ def create_experiment(cfg: dict) -> ExpConfig:
         read_disturb_mitigation_fp=cfg.get('read_disturb_mitigation_fp'),
         read_disturb_update_tolerance=cfg.get('read_disturb_update_tolerance'),
         parasitics=cfg.get('parasitics'),
-        w_res=cfg.get('w_res'))
+        w_res=cfg.get('w_res'),
+        c2c_var=cfg.get('c2c_var')
+    )
 
     for key in cfg.keys():
         if not hasattr(exp, key):

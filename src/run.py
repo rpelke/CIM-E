@@ -69,11 +69,13 @@ def iterate_experiments(exp: ExpConfig):
             'digital_only': exp.digital_only,
             'adc_type': exp.adc_type,
             'adc_profile': exp.adc_profile,
+            'adc_calib_dict': exp.adc_calib_dict,
             'verbose': exp.verbose,
             'read_disturb': exp.read_disturb,
             'read_disturb_mitigation_strategy':
             exp.read_disturb_mitigation_strategy,
-            'parasitics': exp.parasitics
+            'parasitics': exp.parasitics,
+            'c2c_var': exp.c2c_var
         }.items() if value is not None
     }
     iterable_fields = {
@@ -84,6 +86,7 @@ def iterate_experiments(exp: ExpConfig):
             'hrs_lrs': exp.hrs_lrs,
             'gmin_gmax': exp.gmin_gmax,
             'resolution': exp.resolution,
+            'adc_calib_mode': exp.adc_calib_mode,
             'm_mode': exp.m_mode,
             'hrs_noise': exp.hrs_noise,
             'lrs_noise': exp.lrs_noise,
@@ -264,33 +267,40 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     }
 
     # Optional parameters
-    if cfg.get('resolution') != None:
+    if cfg.get('resolution') is not None:
         acs_data["resolution"] = cfg['resolution']
-    if cfg.get('adc_profile') != None:
-        acs_data["adc_profile"] = cfg['adc_profile']
-        if cfg.get('adc_profile'):
-            acs_data["adc_profile_bin_size"] = 100
-    if cfg.get('read_disturb') != None:
+    if cfg.get('adc_profile') is not None:
+        acs_data["adc_profile"] = cfg['adc_profile'] > 0
+        if cfg['adc_profile'] > 0:
+            acs_data["adc_profile_bin_size"] = cfg['adc_profile']
+    if cfg.get('adc_calib_mode') is not None:
+        acs_data["adc_calib_mode"] = cfg['adc_calib_mode']
+    if cfg.get('adc_calib_dict') is not None:
+        acs_data["adc_calib_dict"] = cfg['adc_calib_dict'][cfg['nn_name']
+                                                           ][str(cfg['xbar_size'])][cfg['m_mode']]
+    if cfg.get('read_disturb') is not None:
         acs_data["read_disturb"] = cfg['read_disturb']
-    if cfg.get('V_read') != None:
+    if cfg.get('V_read') is not None:
         acs_data["V_read"] = cfg['V_read']
-    if cfg.get('t_read') != None:
+    if cfg.get('t_read') is not None:
         acs_data["t_read"] = cfg['t_read']
-    if cfg.get('read_disturb_update_freq') != None:
+    if cfg.get('read_disturb_update_freq') is not None:
         acs_data["read_disturb_update_freq"] = cfg['read_disturb_update_freq']
-    if cfg.get('read_disturb_mitigation_strategy') != None:
+    if cfg.get('read_disturb_mitigation_strategy') is not None:
         acs_data["read_disturb_mitigation_strategy"] = cfg[
             'read_disturb_mitigation_strategy']
-    if cfg.get('read_disturb_mitigation_fp') != None:
+    if cfg.get('read_disturb_mitigation_fp') is not None:
         acs_data["read_disturb_mitigation_fp"] = cfg[
             'read_disturb_mitigation_fp']
-    if cfg.get('read_disturb_update_tolerance') != None:
+    if cfg.get('read_disturb_update_tolerance') is not None:
         acs_data["read_disturb_update_tolerance"] = cfg[
             'read_disturb_update_tolerance']
-    if cfg.get('parasitics') != None:
+    if cfg.get('parasitics') is not None:
         acs_data["parasitics"] = cfg['parasitics']
-    if cfg.get('w_res') != None:
+    if cfg.get('w_res') is not None:
         acs_data["w_res"] = cfg['w_res']
+    if cfg.get('c2c_var') is not None:
+        acs_data["c2c_var"] = cfg['c2c_var']
 
     if cfg['m_mode'] in ['TNN_IV', 'TNN_V']:
         acs_data["SPLIT"] = [1, 1]
@@ -681,6 +691,8 @@ def run_experiments(exp: ExpConfig,
             'sim_time_batch_ns': sim_time_batch_ns,
             'config_idx': int(stats.config_idx)
         }
+        # Don't add calib dict to results
+        cfg.pop('adc_calib_dict', None)
         cfg.update(metrics)
         df = pd.concat([df, pd.DataFrame([cfg])], ignore_index=True)
 

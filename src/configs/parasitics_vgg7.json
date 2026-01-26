@@ -1,14 +1,14 @@
 {
     "nn_names": [
-        "LeNet"
+        "VGG7"
     ],
     "ifm" : [
-        [28, 28, 1]
+        [32, 32, 3]
     ],
-    "nn_data_set": "mnist",
-    "nn_data": "TRAIN",
+    "nn_data_set": "cifar10",
+    "nn_data": "TEST",
     "batch": 200,
-    "num_runs": 4,
+    "num_runs": 1,
     "xbar_size": [
 	[128, 128],
 	[256, 256],
@@ -16,17 +16,17 @@
     ],
     "digital_only": false,
     "hrs_lrs": [
-        [5.0, 30.0]
+        [0.5, 4.0]
     ],
     "adc_type": "INF_ADC",
     "m_mode": [
         "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI",
-        "TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"
+	"TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"
     ],
     "hrs_noise": [0.0],
     "lrs_noise": [0.0],
     "verbose": false,
     "parasitics": true,
-    "w_res": [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
-    "V_read": [-0.4]
+    "w_res": [0.0, 0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+    "V_read": [-0.2]
 }
