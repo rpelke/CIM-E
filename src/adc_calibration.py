@@ -1,3 +1,10 @@
+##############################################################################
+# Copyright (C) 2026 Rebecca Pelke, Arunkumar Vaidyanathan                   #
+# All Rights Reserved                                                        #
+#                                                                            #
+# This is work is licensed under the terms described in the LICENSE file     #
+# found in the root directory of this source tree.                           #
+##############################################################################
 import json
 import argparse
 import os
