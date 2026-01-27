@@ -43,9 +43,6 @@ The following steps were tested with `Python3.10` and `Python3.11`.
     ```bash
     # Build image from scratch (Recommended)
     docker build -f docker/build_simulator.dockerfile -t cim-e .
-
-    # Pull pre-built image
-    docker pull docker.io/pelke/cim-e:latest
     ```
 
     This project is designed to run rootless, so you can also use `podman`.
