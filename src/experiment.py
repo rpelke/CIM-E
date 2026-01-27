@@ -5,7 +5,7 @@
 # This is work is licensed under the terms described in the LICENSE file     #
 # found in the root directory of this source tree.                           #
 ##############################################################################
-from typing import List, Tuple, Optional, Union, get_type_hints
+from typing import List, Tuple, Optional, Union, get_type_hints, Dict
 from dataclasses import dataclass
 import numpy as np
 
@@ -27,8 +27,10 @@ class ExpConfig:
     lrs_noise: List[float]
     verbose: bool
     m_mode: List[str]
-    alpha: Optional[List[float]] = None
     resolution: Optional[List[int]] = None
+    adc_profile: Optional[int] = None
+    adc_calib_mode: Optional[List[str]] = None
+    adc_calib_dict: Optional[Dict] = None
     read_disturb: Optional[bool] = None
     V_read: Optional[List[float]] = None
     t_read: Optional[List[float]] = None
@@ -38,9 +40,10 @@ class ExpConfig:
     read_disturb_update_tolerance: Optional[List[float]] = None
     parasitics: Optional[bool] = None
     w_res: Optional[List[float]] = None
+    c2c_var: Optional[bool] = None
 
     def __check_paramters(self):
-        if self.nn_data_set not in ["cifar10", "cifar100"]:
+        if self.nn_data_set not in ["cifar10", "cifar100", "mnist"]:
             raise ValueError("nn_data_set not supported.")
         for ifm_shape in self.ifm:
             for elem in ifm_shape:
@@ -78,12 +81,17 @@ class ExpConfig:
         if self.adc_type not in ["FP_ALPHA_ADC", "INF_ADC"]:
             raise ValueError("adc_type not valid.")
         if self.adc_type != "INF_ADC":
-            for a in self.alpha:
-                if a <= 0.0:
-                    raise ValueError("alpha should be greater than 0")
             for r in self.resolution:
                 if r != -1 and r <= 0:
                     raise ValueError("resolution should be greater than 0")
+            if self.adc_calib_mode is not None:
+                for acm in self.adc_calib_mode:
+                    if acm not in ["MAX", "CALIB"]:
+                        raise ValueError(
+                            f"Unknown ADC calibration mode: {acm}.")
+                    if acm == "CALIB" and self.adc_calib_dict is None:
+                        raise ValueError(
+                            "Calibrated ADC requires calibration limits.")
 
         for mode in self.m_mode:
             if mode not in [

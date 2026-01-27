@@ -53,8 +53,10 @@ def create_experiment(cfg: dict) -> ExpConfig:
         hrs_noise=cfg['hrs_noise'],
         lrs_noise=cfg['lrs_noise'],
         verbose=cfg['verbose'],
-        alpha=cfg.get('alpha'),
         resolution=cfg.get('resolution'),
+        adc_profile=cfg.get('adc_profile'),
+        adc_calib_mode=cfg.get('adc_calib_mode'),
+        adc_calib_dict=cfg.get('adc_calib_dict'),
         read_disturb=cfg.get('read_disturb'),
         V_read=cfg.get('V_read'),
         t_read=cfg.get('t_read'),
@@ -64,7 +66,8 @@ def create_experiment(cfg: dict) -> ExpConfig:
         read_disturb_mitigation_fp=cfg.get('read_disturb_mitigation_fp'),
         read_disturb_update_tolerance=cfg.get('read_disturb_update_tolerance'),
         parasitics=cfg.get('parasitics'),
-        w_res=cfg.get('w_res'))
+        w_res=cfg.get('w_res'),
+        c2c_var=cfg.get('c2c_var'))
 
     for key in cfg.keys():
         if not hasattr(exp, key):
@@ -80,5 +83,16 @@ def get_model_name(cfg: str) -> str:
         mode = 'tnn'
     else:
         raise ValueError("Unknown mode.")
-    model_name = f"{mode}_{cfg['nn_data_set']}_{cfg['nn_name']}_b{cfg['batch']}_mxn{cfg['xbar_size'][0]}x{cfg['xbar_size'][1]}_inp{cfg['batch']}x{cfg['ifm'][0]}x{cfg['ifm'][1]}x{cfg['ifm'][2]}.so"
+
+    m_xbar = cfg['xbar_size'][0]
+    n_xbar = cfg['xbar_size'][1]
+
+    # Special mappings
+    # if cfg['m_mode'] == "BNN_V":
+    #     m_xbar = cfg['xbar_size'][0] * 2
+
+    if cfg['m_mode'] in ["BNN_V", "BNN_VI", "TNN_I"]:
+        n_xbar = cfg['xbar_size'][1] // 2
+
+    model_name = f"{mode}_{cfg['nn_data_set']}_{cfg['nn_name']}_b{cfg['batch']}_mxn{m_xbar}x{n_xbar}_inp{cfg['batch']}x{cfg['ifm'][0]}x{cfg['ifm'][1]}x{cfg['ifm'][2]}.so"
     return model_name

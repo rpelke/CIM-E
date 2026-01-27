@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (C) 2025 Rebecca Pelke                                           #
+# Copyright (C) 2025 Rebecca Pelke, Arunkumar Vaidyanathan                   #
 # All Rights Reserved                                                        #
 #                                                                            #
 # This is work is licensed under the terms described in the LICENSE file     #
@@ -8,9 +8,11 @@
 import sysconfig
 import argparse
 import json
+import os
+import sys
 
-from model_parser import *
-from run import *
+from model_parser import create_experiment
+from run import run_experiments
 
 repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 python_version = '.'.join(sys.version.split('.', 2)[:2])
@@ -24,8 +26,13 @@ if __name__ == "__main__":
     parser.add_argument(
         '--n_jobs',
         type=int,
-        help=
-        'The maximum number of concurrently running jobs (joblib parameter)',
+        help='Maximum number of concurrently running jobs (joblib parameter)',
+        required=False,
+        default=4)
+    parser.add_argument(
+        '--n_sim_threads',
+        type=int,
+        help='Maximum number of parallel threads spawnable by the simulator',
         required=False,
         default=4)
     parser.add_argument('--debug', action='store_true', help='Use debug mode')
@@ -73,6 +80,6 @@ if __name__ == "__main__":
     print(f"Valid configuration: {exp_name}")
 
     if not args.check_config_only:
-        run_experiments(exp, exp_name, args.n_jobs, args.debug,
-                        args.use_same_inputs, args.save_sim_stats,
+        run_experiments(exp, exp_name, args.n_jobs, args.n_sim_threads,
+                        args.debug, args.use_same_inputs, args.save_sim_stats,
                         args.acs_lib_path, args.emu_lib_path, args.acs_cfg_dir)

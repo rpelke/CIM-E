@@ -43,9 +43,6 @@ The following steps were tested with `Python3.10` and `Python3.11`.
     ```bash
     # Build image from scratch (Recommended)
     docker build -f docker/build_simulator.dockerfile -t cim-e .
-
-    # Pull pre-built image
-    docker pull docker.io/pelke/cim-e:latest
     ```
 
     This project is designed to run rootless, so you can also use `podman`.
@@ -94,25 +91,31 @@ If you want to use podman, please execute `export CONTAINER_ENGINE=podman` befor
 
 2. Specify all parameters to be used in the design space exploration. Every combination of parameters will be simulated. A tick in the `DSE list`column means that a list with several possible parameters can be created here. Otherwise, only a `Single Choice` is possible.
 
-    | Parameter      | Explanation                            | DSE<br>List | Single<br>Choice | Optional<br>Parameter |
-    |----------------|----------------------------------------|:------:|:-----:|:-----:|
-    | `nn_names`     | Names of the neural network architectures       |✅ |    | no |
-    | `ifm`          | Dimension of the input feature map              | ✅ |    | no |
-    | `nn_data_set`  | Data set                                        |    | ✅ | no |
-    | `nn_data`      | Choise of dataset parts (test or train)         |    | ✅ | no |
-    | `batch`        | Batch size of input feature map                 |    | ✅ | no |
-    | `num_runs`     | Total number of images: `batch`*`num_runs`      |    | ✅ | no |
-    | `xbar_size`    | Dimensions of the offloaded matrix (MxN)        | ✅ |    | no |
-    | `digital_only` | True if mappings should use digital values only |    | ✅ | no |
-    | `hrs_lrs`      | HRS/LRS current (in uA) if `V_read is applied`  | ✅ |    | yes |
-    | `gmin_gmax`    | Conductance values (in uS), needs `V_read`      | ✅ |    | yes |
-    | `adc_type`     | Currently only supports `FP_ADC_ALPHA`          |    | ✅ | no |
-    | `alpha`        | Limitation of the ADC range in [0,1], 1 is 100% | ✅ |    | yes |
-    | `resolution`   | ADC resolution in bit                           | ✅ |    | yes |
-    | `m_mode`       | Mapping mode (see next table)                   | ✅ |    | no |
-    | `hrs_noise`    | Std. dev. of the gaussian noise (uA) around hrs | ✅ |    | no |
-    | `lrs_noise`    | Std. dev. of the gaussian noise (uA) around lrs | ✅ |    | no |
-    | `verbose`      | Enable verbose output of the simulator          | ✅ |    | no |
+    | Parameter        | Explanation                                                       | DSE<br>List | Single<br>Choice | Optional<br>Parameter |
+    |------------------|-------------------------------------------------------------------|:-----------:|:----------------:|:---------------------:|
+    | `nn_names`       | Names of the neural network architectures                         |      ✅     |                  |          no           |
+    | `ifm`            | Dimension of the input feature map                                |      ✅     |                  |          no           |
+    | `nn_data_set`    | Data set                                                          |             |        ✅        |          no           |
+    | `nn_data`        | Choise of dataset parts (test or train)                           |             |        ✅        |          no           |
+    | `batch`          | Batch size of input feature map                                   |             |        ✅        |          no           |
+    | `num_runs`       | Total number of images: `batch`*`num_runs`                        |             |        ✅        |          no           |
+    | `xbar_size`      | Dimensions of the offloaded matrix (MxN)                          |      ✅     |                  |          no           |
+    | `digital_only`   | True if mappings should use digital values only                   |             |        ✅        |          no           |
+    | `hrs_lrs`        | HRS/LRS current (in uA) if `V_read is applied`                    |      ✅     |                  |          yes          |
+    | `gmin_gmax`      | Conductance values (in uS), needs `V_read`                        |      ✅     |                  |          yes          |
+    | `adc_type`       | Currently only supports `FP_ADC_ALPHA`                            |             |        ✅        |          no           |
+    | `resolution`     | ADC resolution in bit                                             |      ✅     |                  |          yes          |
+    | `adc_profile`    | Enable ADC input profiling                                        |             |        ✅        |          yes          |
+    | `adc_calib_mode` | Calibration mode for ADC, can be `MAX` or `CALIB`                 |      ✅     |                  |          yes          |
+    | `adc_calib_dict` | Per-layer calibrated current limits for use with `CALIB` ADC mode |             |        ✅        |          yes          |
+    | `m_mode`         | Mapping mode (see next table)                                     |      ✅     |                  |          no           |
+    | `hrs_noise`      | Std. dev. of the gaussian noise (uA) around hrs                   |      ✅     |                  |          no           |
+    | `lrs_noise`      | Std. dev. of the gaussian noise (uA) around lrs                   |      ✅     |                  |          no           |
+    | `c2c_var`        | Enable Cycle-to-Cycle variability modeling                        |             |        ✅        |          yes          |
+    | `parasitics`     | Enable parasitic wire resistance modeling                         |             |        ✅        |          yes          |
+    | `w_res`          | Parasitic wire resistance (Ohms)                                  |      ✅     |                  |          yes          |
+    | `V_read`         | Fixed read voltage applied when row is activated                  |             |        ✅        |          yes          |
+    | `verbose`        | Enable verbose output of the simulator                            |      ✅     |                  |          no           |
 
     A brief overview of the mapping modes is given in the tables below:
 

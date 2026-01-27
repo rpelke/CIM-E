@@ -21,7 +21,6 @@
         [5.0, 30.0]
     ],
     "adc_type": "INF_ADC",
-    "alpha": [1.0],
     "resolution": [-1],
     "m_mode": ["BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"],
     "hrs_noise": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 12.0, 16.0],

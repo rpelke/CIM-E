@@ -1,4 +1,12 @@
+##############################################################################
+# Copyright (C) 2026 Rebecca Pelke                                           #
+# All Rights Reserved                                                        #
+#                                                                            #
+# This is work is licensed under the terms described in the LICENSE file     #
+# found in the root directory of this source tree.                           #
+##############################################################################
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import pandas as pd
 import numpy as np
 import math
@@ -7,18 +15,24 @@ import ast
 import pickle
 import argparse
 import json
+from functools import reduce
 
 from model_parser import *
 from run import *
+from RWTHColors import ColorManager
+
+# Colors
+cm = ColorManager()
 
 colors = [
-    "#00549F",  # blue
-    "#A11035",  # bordeaux
-    "#57AB27",  # green
-    "#F6A800",  # orange
-    "#0098A1",  # turquoise
-    "#BDCD00",  # light green
-    "E30066"  # magenta
+    cm.RWTHBlau(),  # blue
+    cm.RWTHBordeaux(),  # bordeaux
+    cm.RWTHGruen(),  # green
+    cm.RWTHOrange(),  # orange
+    cm.RWTHTuerkis(),  # turquoise
+    cm.RWTHMaiGruen(),  # light green
+    cm.RWTHMagenta(),  # magenta
+    cm.RWTHPetrol()  # petrol
 ]
 
 color_mode = {
@@ -42,6 +56,10 @@ color_bits = {
     6: colors[3],
     8: colors[4]
 }
+
+# Font
+rc('text', usetex=True)
+rc('text.latex', preamble="\\usepackage{libertine}")
 
 
 def adc_alpha_plot(df: pd.DataFrame, store_path: str, s_cat: list,
@@ -627,35 +645,8 @@ if __name__ == "__main__":
         cfg = json.load(json_file)
     exp_name = args.config.split('/')[-1].split('.json')[0]
     repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
-
-    if exp_name == 'read_disturb_simulation_overhead':
-        exp_result_path = repo_path + '/results/read_disturb_simulation_time'
-        baseline_path = repo_path + '/results/' + exp_name
-        try:
-            df = pd.read_csv(
-                f"{exp_result_path}/read_disturb_simulation_time.csv")
-        except:
-            print(
-                f"Error: {exp_name} experiment needs both 'read_disturb_simulation_time.csv' and '{exp_name}.csv'"
-            )
-            raise
-        df_baseline = pd.read_csv(f"{baseline_path}/{exp_name}.csv")
-
-    else:
-        exp_result_path = repo_path + '/results/' + exp_name
-        df = pd.read_csv(f"{exp_result_path}/{exp_name}.csv")
-
-    if exp_name == 'read_disturb_mitigation_hw':
-        hw_path = repo_path + '/results/read_disturb_mitigation_hw'
-        if not os.path.exists(hw_path):
-            raise Exception(
-                f"Hardware results for {exp_name} not found. Please run the hardware simulation first."
-            )
-        sw_path = repo_path + '/results/read_disturb_mitigation_sw'
-        if not os.path.exists(sw_path):
-            raise Exception(
-                f"Software results for {exp_name} not found. Please run the software simulation first."
-            )
+    exp_result_path = repo_path + '/results/' + exp_name
+    df = pd.read_csv(f"{exp_result_path}/{exp_name}.csv")
 
     categories = df.columns
     cat_static = []  # Categories (columns) that all experiments have in common
@@ -700,6 +691,17 @@ if __name__ == "__main__":
                          s_cat=cat_static,
                          d_cat=cat_dynamic)
     elif exp_name == 'read_disturb_simulation_overhead':
+        exp_result_path = repo_path + '/results/read_disturb_simulation_time'
+        baseline_path = repo_path + '/results/' + exp_name
+        try:
+            df = pd.read_csv(
+                f"{exp_result_path}/read_disturb_simulation_time.csv")
+        except:
+            print(
+                f"Error: {exp_name} experiment needs both 'read_disturb_simulation_time.csv' and '{exp_name}.csv'"
+            )
+            raise
+        df_baseline = pd.read_csv(f"{baseline_path}/{exp_name}.csv")
         rd_overhead_plot(df=df,
                          df_baseline=df_baseline,
                          store_path=store_path,
@@ -711,6 +713,17 @@ if __name__ == "__main__":
                           s_cat=cat_static,
                           d_cat=cat_dynamic)
     elif exp_name == 'read_disturb_mitigation_hw':
+        hw_path = repo_path + '/results/read_disturb_mitigation_hw'
+        if not os.path.exists(hw_path):
+            raise Exception(
+                f"Hardware results for {exp_name} not found. Please run the hardware simulation first."
+            )
+        sw_path = repo_path + '/results/read_disturb_mitigation_sw'
+        if not os.path.exists(sw_path):
+            raise Exception(
+                f"Software results for {exp_name} not found. Please run the software simulation first."
+            )
+
         read_disturb_mitigation_comparison(store_path=store_path,
                                            hw_path=hw_path,
                                            sw_path=sw_path)

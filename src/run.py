@@ -68,11 +68,14 @@ def iterate_experiments(exp: ExpConfig):
             'num_runs': exp.num_runs,
             'digital_only': exp.digital_only,
             'adc_type': exp.adc_type,
+            'adc_profile': exp.adc_profile,
+            'adc_calib_dict': exp.adc_calib_dict,
             'verbose': exp.verbose,
             'read_disturb': exp.read_disturb,
             'read_disturb_mitigation_strategy':
             exp.read_disturb_mitigation_strategy,
-            'parasitics': exp.parasitics
+            'parasitics': exp.parasitics,
+            'c2c_var': exp.c2c_var
         }.items() if value is not None
     }
     iterable_fields = {
@@ -82,8 +85,8 @@ def iterate_experiments(exp: ExpConfig):
             'xbar_size': exp.xbar_size,
             'hrs_lrs': exp.hrs_lrs,
             'gmin_gmax': exp.gmin_gmax,
-            'alpha': exp.alpha,
             'resolution': exp.resolution,
+            'adc_calib_mode': exp.adc_calib_mode,
             'm_mode': exp.m_mode,
             'hrs_noise': exp.hrs_noise,
             'lrs_noise': exp.lrs_noise,
@@ -199,6 +202,23 @@ def _get_dataset(
         else:
             raise ValueError("Dataset not supported")
 
+    elif nn_name in ['LeNet']:
+        if nn_data_set == 'mnist':
+            num_classes = 10
+            (train_images, train_labels), (
+                test_images,
+                test_labels) = tf.keras.datasets.mnist.load_data()
+            train_images, train_labels, test_images, test_labels = \
+                train_images[:num_data], train_labels[:num_data], \
+                test_images[:num_data], test_labels[:num_data]
+            train_images = train_images.reshape(
+                (num_data, 28, 28, 1)).astype("float32")
+            test_images = test_images.reshape(
+                (num_data, 28, 28, 1)).astype("float32")
+            train_images, test_images = train_images / 127.5 - 1, test_images / 127.5 - 1
+        else:
+            raise ValueError("Dataset not supported")
+
     else:
         raise ValueError("Dataset not supported")
 
@@ -248,31 +268,40 @@ def _gen_acs_cfg_data(cfg: dict, tmp_name: str) -> dict:
     }
 
     # Optional parameters
-    if cfg.get('alpha') != None:
-        acs_data["alpha"] = cfg['alpha']
-    if cfg.get('resolution') != None:
+    if cfg.get('resolution') is not None:
         acs_data["resolution"] = cfg['resolution']
-    if cfg.get('read_disturb') != None:
+    if cfg.get('adc_profile') is not None:
+        acs_data["adc_profile"] = cfg['adc_profile'] > 0
+        if cfg['adc_profile'] > 0:
+            acs_data["adc_profile_bin_size"] = cfg['adc_profile']
+    if cfg.get('adc_calib_mode') is not None:
+        acs_data["adc_calib_mode"] = cfg['adc_calib_mode']
+    if cfg.get('adc_calib_dict') is not None:
+        acs_data["adc_calib_dict"] = cfg['adc_calib_dict'][cfg['nn_name']][str(
+            cfg['xbar_size'])][cfg['m_mode']]
+    if cfg.get('read_disturb') is not None:
         acs_data["read_disturb"] = cfg['read_disturb']
-    if cfg.get('V_read') != None:
+    if cfg.get('V_read') is not None:
         acs_data["V_read"] = cfg['V_read']
-    if cfg.get('t_read') != None:
+    if cfg.get('t_read') is not None:
         acs_data["t_read"] = cfg['t_read']
-    if cfg.get('read_disturb_update_freq') != None:
+    if cfg.get('read_disturb_update_freq') is not None:
         acs_data["read_disturb_update_freq"] = cfg['read_disturb_update_freq']
-    if cfg.get('read_disturb_mitigation_strategy') != None:
+    if cfg.get('read_disturb_mitigation_strategy') is not None:
         acs_data["read_disturb_mitigation_strategy"] = cfg[
             'read_disturb_mitigation_strategy']
-    if cfg.get('read_disturb_mitigation_fp') != None:
+    if cfg.get('read_disturb_mitigation_fp') is not None:
         acs_data["read_disturb_mitigation_fp"] = cfg[
             'read_disturb_mitigation_fp']
-    if cfg.get('read_disturb_update_tolerance') != None:
+    if cfg.get('read_disturb_update_tolerance') is not None:
         acs_data["read_disturb_update_tolerance"] = cfg[
             'read_disturb_update_tolerance']
-    if cfg.get('parasitics') != None:
+    if cfg.get('parasitics') is not None:
         acs_data["parasitics"] = cfg['parasitics']
-    if cfg.get('w_res') != None:
+    if cfg.get('w_res') is not None:
         acs_data["w_res"] = cfg['w_res']
+    if cfg.get('c2c_var') is not None:
+        acs_data["c2c_var"] = cfg['c2c_var']
 
     if cfg['m_mode'] in ['TNN_IV', 'TNN_V']:
         acs_data["SPLIT"] = [1, 1]
@@ -336,7 +365,7 @@ def _check_prev_results(cfg: dict, result_path: str,
         return cfg, df, c_idx_offset
 
 
-def _load_xbar_simulator_lib(c: dict):
+def _load_xbar_simulator_lib(c: dict, n_sim_threads: int):
     # Execute dlopen to make symbols visible for the compiled executable
     files = glob.glob(os.path.join(ACS_LIB_PATH, 'acs_int.cpython*'))
     assert len(files) == 1
@@ -352,7 +381,7 @@ def _load_xbar_simulator_lib(c: dict):
     # Set acs config
     fd, tmp_name = tempfile.mkstemp(dir=ACS_CFG_DIR, suffix=".json")
     _ = _gen_acs_cfg_data(c, tmp_name)
-    acs_int.set_config(os.path.abspath(tmp_name))
+    acs_int.set_config(os.path.abspath(tmp_name), n_sim_threads)
     os.close(fd)
 
     return acs_int, acs_lib
@@ -371,7 +400,9 @@ def _run_single_experiment(
                                                           np.ndarray]],
     ideal_xbar: bool = False,
     use_same_inputs: bool = False,
-    c_idx_offset: int = 0
+    c_idx_offset: int = 0,
+    result_path: str = "",
+    n_sim_threads: int = 1
 ) -> Tuple[dict, float, float, List[float], List[float], List[int],
            SimulationStats]:
     """Run a single experiment. This function is called from multiple processes.
@@ -383,6 +414,8 @@ def _run_single_experiment(
         ideal_xbar (bool, optional): Switch off any non-idealities (if true). Defaults to False.
         use_same_inputs (bool, optional): Use the same inputs for all runs. Defaults to False.
         c_idx_offset (int, optional): Offset for the config index in case of previous configs. Defaults to 0.
+        result_path (str): Path to experiment result directory.
+        n_sim_threads (int): Number of threads spawnable by the simulator.
     Returns:
         Tuple[dict, float, float]: cfg c, top 1% accuracy, top 5% accuracy
     """
@@ -391,7 +424,7 @@ def _run_single_experiment(
         emu_lib = _load_emulator_lib()
     else:
         print(f"Start Accuracy Simulation ({c_idx + 1}/{num_c})")
-        acs_int, acs_lib = _load_xbar_simulator_lib(c)
+        acs_int, acs_lib = _load_xbar_simulator_lib(c, n_sim_threads)
 
     n_classes, (train_images, train_labels), (test_images, test_labels) = data
 
@@ -492,6 +525,11 @@ def _run_single_experiment(
                                     mvm_ops=acs_int.mvm_ops(),
                                     refresh_ops=None,
                                     refresh_cell_ops=None)
+
+        if c.get("adc_profile"):
+            adc_profile_filename = f"{result_path}/adc_prof_{stats.config_idx}.json"
+            acs_int.dump_adc_profile(adc_profile_filename)
+
         del acs_int
         del acs_lib
 
@@ -600,6 +638,7 @@ def _get_matching_dataset(
 def run_experiments(exp: ExpConfig,
                     exp_name: str,
                     n_jobs: int,
+                    n_sim_threads: int,
                     dbg: bool = False,
                     use_same_inputs: bool = False,
                     save_sim_stats: bool = False,
@@ -629,11 +668,14 @@ def run_experiments(exp: ExpConfig,
             res.append(
                 _run_single_experiment(c, c_idx, len(cfgs),
                                        _get_matching_dataset(c, datasets),
-                                       False, use_same_inputs, c_idx_offset))
+                                       False, use_same_inputs, c_idx_offset,
+                                       result_path, n_sim_threads))
     else:
-        args_list = [(c, c_idx, len(cfgs), _get_matching_dataset(c, datasets),
-                      False, use_same_inputs, c_idx_offset)
-                     for c_idx, c in enumerate(cfgs)]
+        args_list = [
+            (c, c_idx, len(cfgs), _get_matching_dataset(c, datasets), False,
+             use_same_inputs, c_idx_offset, result_path, n_sim_threads)
+            for c_idx, c in enumerate(cfgs)
+        ]
 
         with multiprocessing.Pool(processes=n_jobs) as pool:
             res = pool.map(_run_single_experiment_wrapper, args_list)
@@ -648,8 +690,11 @@ def run_experiments(exp: ExpConfig,
             'top5_batch': top5_batch,
             'top1_baseline': top1_baseline,
             'top5_baseline': top5_baseline,
-            'sim_time_batch_ns': sim_time_batch_ns
+            'sim_time_batch_ns': sim_time_batch_ns,
+            'config_idx': int(stats.config_idx)
         }
+        # Don't add calib dict to results
+        cfg.pop('adc_calib_dict', None)
         cfg.update(metrics)
         df = pd.concat([df, pd.DataFrame([cfg])], ignore_index=True)
 

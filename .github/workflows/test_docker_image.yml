@@ -10,35 +10,43 @@ jobs:
   build-check:
     runs-on: ubuntu-22.04
 
-    container:
-      image: docker.io/pelke/cim-e:latest
-      options: --workdir /github/workspace
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Mark repository as safe for Git
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-      - name: Set up and build
-        run: |
-          . /apps/.venv/bin/activate
-          mkdir -p src/acs_configs
-          mkdir -p results/test
-          ./models/download_models.bash
-          python3 src/main.py \
-            --config src/configs/test.json \
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          tags: test-cim-e:latest
+          file: docker/build_simulator.dockerfile
+          push: false
+        
+      - name: Setup and run test
+        uses: addnab/docker-run-action@v3
+        with:
+          image: test-cim-e:latest
+          options: -v ${{ github.workspace }}/src:/apps/src:Z -v ${{ github.workspace }}/models:/apps/models:Z -v ${{ github.workspace }}/results:/apps/results:Z
+          run: |
+            . /apps/.venv/bin/activate
+            mkdir -p /apps/src/acs_configs
+            mkdir -p /apps/results/test
+            /apps/models/download_models.bash
+            python3 /apps/src/main.py \
+            --config /apps/src/configs/test.json \
             --acs_lib_path $(python3 -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])') \
             --emu_lib_path /apps/build/release/lib/libacs_cb_emu.so
       
       - name: Check all configurations
-        run: |
-          . /apps/.venv/bin/activate
-          for cfg in src/configs/*.json; do
-            name="${cfg%.json}"
-            mkdir -p "results/$name"
-            python3 src/main.py --check_config_only --config "$cfg"
-          done
+        uses: addnab/docker-run-action@v3
+        with:
+          image: test-cim-e:latest
+          options: -v ${{ github.workspace }}/src:/apps/src:Z -v ${{ github.workspace }}/models:/apps/models:Z -v ${{ github.workspace }}/results:/apps/results:Z
+          run: |
+            . /apps/.venv/bin/activate
+            for cfg in /apps/src/configs/*.json; do
+              name="${cfg%.json}"
+              mkdir -p "results/$name"
+              python3 src/main.py --check_config_only --config "$cfg"
+            done

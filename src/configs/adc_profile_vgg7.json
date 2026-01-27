@@ -8,21 +8,23 @@
     "nn_data_set": "cifar10",
     "nn_data": "TRAIN",
     "batch": 200,
-    "num_runs": 4,
+    "num_runs": 1,
     "xbar_size": [
-        [256, 256]
+	[128, 128],
+        [256, 256],
+	[512, 512]
     ],
     "digital_only": false,
     "hrs_lrs": [
-        [5.0, 50.0]
+        [0.5, 4.0]
     ],
     "adc_type": "FP_ALPHA_ADC",
-    "resolution": [3, 4, 5, 6, 8],
-    "m_mode": [
-        "TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V",
-        "BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI"
-    ],
+    "resolution": [8],
+    "adc_profile": 8,
+    "m_mode": ["BNN_I", "BNN_II", "BNN_III", "BNN_IV", "BNN_V", "BNN_VI",
+               "TNN_I", "TNN_II", "TNN_III", "TNN_IV", "TNN_V"
+	      ],
     "hrs_noise": [0.0],
     "lrs_noise": [0.0],
-    "verbose": false
+    "verbose": true
 }
