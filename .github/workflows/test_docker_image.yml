@@ -2,7 +2,7 @@ name: Test Docker Image
 
 on:
   push:
-    branches: [main, dev*]
+    branches: ["**"]
   pull_request:
     branches: [main]
 
@@ -10,19 +10,51 @@ jobs:
   build-check:
     runs-on: ubuntu-22.04
 
+    env:
+      ORIGINAL_REPO: rpelke/CIM-E
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
-      - name: Build Docker image
+      # Decide whether we are allowed to push to Docker Hub:
+      # On push events to main or dockertest branches in the original repo only.
+      - name: Decide push eligibility
+        id: pushgate
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          SHOULD_PUSH="false"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]] \
+             && [[ "${GITHUB_REPOSITORY}" == "${ORIGINAL_REPO}" ]] \
+             && ([[ "${BRANCH}" == "main" ]] || [[ "${BRANCH}" == "dockertest" ]]); then
+            SHOULD_PUSH="true"
+          fi
+
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "should_push=${SHOULD_PUSH}" >> "$GITHUB_OUTPUT"
+          echo "Push to DockerHub: ${SHOULD_PUSH} (repo=${GITHUB_REPOSITORY}, branch=${BRANCH}, event=${GITHUB_EVENT_NAME})"
+
+      - name: Log in to Docker Hub
+        if: steps.pushgate.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image (local tag for tests)
         uses: docker/build-push-action@v6
         with:
-          tags: test-cim-e:latest
+          context: .
           file: docker/build_simulator.dockerfile
           push: false
-        
+          load: true
+          tags: test-cim-e:latest
+
       - name: Setup and run test
         uses: addnab/docker-run-action@v3
         with:
@@ -34,10 +66,10 @@ jobs:
             mkdir -p /apps/results/test
             /apps/models/download_models.bash
             python3 /apps/src/main.py \
-            --config /apps/src/configs/test.json \
-            --acs_lib_path $(python3 -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])') \
-            --emu_lib_path /apps/build/release/lib/libacs_cb_emu.so
-      
+              --config /apps/src/configs/test.json \
+              --acs_lib_path $(python3 -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])') \
+              --emu_lib_path /apps/build/release/lib/libacs_cb_emu.so
+
       - name: Check all configurations
         uses: addnab/docker-run-action@v3
         with:
@@ -46,7 +78,15 @@ jobs:
           run: |
             . /apps/.venv/bin/activate
             for cfg in /apps/src/configs/*.json; do
-              name="${cfg%.json}"
-              mkdir -p "results/$name"
-              python3 src/main.py --check_config_only --config "$cfg"
+              name="$(basename "${cfg%.json}")"
+              mkdir -p "/apps/results/$name"
+              python3 /apps/src/main.py --check_config_only --config "$cfg"
             done
+
+      - name: Tag and push Docker image (only on main/dockertest in original repo)
+        if: steps.pushgate.outputs.should_push == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker tag test-cim-e:latest docker.io/pelke/cim-e:latest
+          docker push docker.io/pelke/cim-e:latest
