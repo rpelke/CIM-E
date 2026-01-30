@@ -38,11 +38,16 @@ The following steps were tested with `Python3.10` and `Python3.11`.
     ./models/download_models.bash
     ```
 
-1. Download the docker image or build the image from scratch:
+1. Download the docker image OR build the image from scratch:
 
+    Build image from scratch (recommended):
     ```bash
-    # Build image from scratch (Recommended)
     docker build -f docker/build_simulator.dockerfile -t cim-e .
+    ```
+
+    Download the pre-built image (attention: this image belongs to the [latest commit](https://github.com/rpelke/CIM-E) on the `main` branch):
+    ```bash
+    docker pull docker.io/pelke/cim-e:latest
     ```
 
     This project is designed to run rootless, so you can also use `podman`.
