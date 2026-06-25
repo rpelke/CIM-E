@@ -62,6 +62,7 @@ jobs:
           options: -v ${{ github.workspace }}/src:/apps/src:Z -v ${{ github.workspace }}/models:/apps/models:Z -v ${{ github.workspace }}/results:/apps/results:Z
           run: |
             . /apps/.venv/bin/activate
+            export PYTHONPATH="/apps/apache-tvm-src-v0.14.0/python:${PYTHONPATH}"
             mkdir -p /apps/src/acs_configs
             mkdir -p /apps/results/test
             /apps/models/download_models.bash
@@ -77,6 +78,7 @@ jobs:
           options: -v ${{ github.workspace }}/src:/apps/src:Z -v ${{ github.workspace }}/models:/apps/models:Z -v ${{ github.workspace }}/results:/apps/results:Z
           run: |
             . /apps/.venv/bin/activate
+            export PYTHONPATH="/apps/apache-tvm-src-v0.14.0/python:${PYTHONPATH}"
             for cfg in /apps/src/configs/*.json; do
               name="$(basename "${cfg%.json}")"
               mkdir -p "/apps/results/$name"

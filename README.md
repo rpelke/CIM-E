@@ -143,7 +143,7 @@ If you want to use podman, please execute `export CONTAINER_ENGINE=podman` befor
 
 
 ## Development Only
-1. Native build of the simulator (without docker):
+1. Native build of the simulator (without docker). See also: [build_simulator.yml](.github/workflows/build_simulator.yml):
 
     You need a `python-dev` version since [pybind11](analog-cim-sim/cpp/CMakeLists.txt) needs the `Python.h` header file.
 
@@ -153,6 +153,12 @@ If you want to use podman, please execute `export CONTAINER_ENGINE=podman` befor
     pip3 install -r analog-cim-sim/requirements.txt
     pip3 install -r requirements.txt
     ./scripts/build_simulator.bash
+    ```
+
+    Build TVM and update the `PYTHONPATH`:
+    ```bash
+    ./scripts/build_tvm.bash
+    export PYTHONPATH="$PWD/apache-tvm-src-v0.14.0/python:${PYTHONPATH}"
     ```
 
 1. Run simulations:

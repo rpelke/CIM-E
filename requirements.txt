@@ -1,6 +1,6 @@
 pandas
 tensorflow
 numpy==1.26.0
-apache-tvm
+decorator
 matplotlib
 rwthcolors

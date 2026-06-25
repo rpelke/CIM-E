@@ -8,6 +8,7 @@ __pycache__
 
 # Build
 build/*
+apache-tvm-src-*
 
 # Simulation artefacts
 acs_configs

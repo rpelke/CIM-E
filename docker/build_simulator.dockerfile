@@ -21,19 +21,23 @@ RUN apt-get update && \
     python3-pip \
     python3-venv \
     curl \
+    wget \
     libtbb-dev
 
 RUN python3 -m venv /apps/.venv
 
 # Install simulator
-COPY ../analog-cim-sim /apps/analog-cim-sim
-COPY ../scripts /apps/scripts
+COPY analog-cim-sim /apps/analog-cim-sim
+COPY scripts /apps/scripts
 RUN . /apps/.venv/bin/activate && pip3 install -r /apps/analog-cim-sim/requirements.txt
 RUN . /apps/.venv/bin/activate && /apps/scripts/build_simulator.bash
 
-# Install TVM runtime
-COPY ../requirements.txt /apps/requirements.txt
+# Install requirements
+COPY requirements.txt /apps/requirements.txt
 RUN . /apps/.venv/bin/activate && pip3 install -r /apps/requirements.txt
+
+# Build TVM runtime
+RUN cd /apps && . /apps/.venv/bin/activate && /apps/scripts/build_tvm.bash
 
 WORKDIR /apps
 
@@ -41,6 +45,6 @@ WORKDIR /apps
 RUN mkdir /apps/home && chmod 777 /apps/home && chmod 777 /apps
 ENV HOME=/apps/home
 
-COPY ../scripts/entrypoint.bash /apps/entrypoint.bash
+COPY scripts/entrypoint.bash /apps/entrypoint.bash
 RUN chmod 777 /apps/entrypoint.bash
 ENTRYPOINT ["/apps/entrypoint.bash"]

@@ -21,6 +21,8 @@ else
     OPTIONAL_ARGS=""
 fi
 
+export PYTHONPATH=/apps/apache-tvm-src-v0.14.0/python:${PYTHONPATH}
+
 source .venv/bin/activate
 python3 src/main.py \
     --config src/configs/$EXP_NAME.json \

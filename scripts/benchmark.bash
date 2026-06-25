@@ -69,10 +69,16 @@ else
     mkdir -p $PROJ_DIR/src/acs_configs
 fi
 
-
 CONTAINER_FLAGS=""
 
-if [[ "$CONTAINER_ENGINE" == "podman" ]]; then
+# Detect when docker CLI is emulated by podman (podman-docker).
+ENGINE_VERSION="$($CONTAINER_ENGINE --version 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+IS_PODMAN_EMULATION=false
+if [[ "$CONTAINER_ENGINE" == "docker" ]] && [[ "$ENGINE_VERSION" == *"podman"* ]]; then
+    IS_PODMAN_EMULATION=true
+fi
+
+if [[ "$CONTAINER_ENGINE" == "podman" || "$IS_PODMAN_EMULATION" == "true" ]]; then
     if podman run --help | grep -q -- "--userns=keep-id"; then
         CONTAINER_FLAGS="--userns=keep-id"
     else

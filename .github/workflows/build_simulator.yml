@@ -22,7 +22,7 @@ jobs:
       - name: Install simulator dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libtbb-dev
+          sudo apt-get install -y cmake libtbb-dev build-essential wget
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -39,4 +39,6 @@ jobs:
           mkdir -p results/test
           ./models/download_models.bash
           ./scripts/build_simulator.bash
+          ./scripts/build_tvm.bash
+          export PYTHONPATH="$PWD/apache-tvm-src-v0.14.0/python:${PYTHONPATH}"
           python3 src/main.py --config src/configs/test.json
