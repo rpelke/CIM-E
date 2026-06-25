@@ -7,6 +7,8 @@
 # found in the root directory of this source tree.                           #
 ##############################################################################
 
+set -euo pipefail
+
 # Get directory of script
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do 
@@ -35,9 +37,21 @@ base_url="https://rwth-aachen.sciebo.de/s/4ZwRYj23blieuzv/download?path=%2F&file
 
 for file in "${files[@]}"; do
     if [ ! -f "${destination}/${file}" ]; then
-        if curl --head --silent --fail "${base_url}${file}" > /dev/null; then
+        if curl --head --silent --fail --location "${base_url}${file}" > /dev/null; then
             echo "Downloading $file..."
-            curl -o "${destination}/${file}" "${base_url}${file}"
+            tmp_file="${destination}/${file}.tmp"
+            rm -f "$tmp_file"
+            curl \
+                --fail \
+                --location \
+                --show-error \
+                --silent \
+                --retry 5 \
+                --retry-delay 2 \
+                --retry-all-errors \
+                -o "$tmp_file" \
+                "${base_url}${file}"
+            mv "$tmp_file" "${destination}/${file}"
         else
             echo "Remote file $file does not exist at ${base_url}${file}. Skipping."
         fi
